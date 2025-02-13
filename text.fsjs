@@ -1,0 +1,11 @@
+#file >>  @exsp new: text.fsjs, @v4.0;
+#editable >> @exsp new:{
+sym('e', data);
+if: line( data>undefined >> create new( data[from: file.editable;]));
+};
+get frame #editable: data & edit frome(cdnc raw{
+-*-t line: broken(6);
+re(sym).def: check before;
+Rpt(sym).def: required;
+Mx(sym).edit by(auto fill in >> if mxs: (line[e]); & ($)p: check; es if ($)m > copy line(line[e]);
+}).exec(file).output @extension = fscss.js?exec=2abvfz9_ex25;
