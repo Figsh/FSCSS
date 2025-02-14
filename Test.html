@@ -1,0 +1,27 @@
+<head>
+  <link href="https://raw.githubusercontent.com/Figsh/FSCSS/refs/heads/main/test.fscss" rel="stylesheet" type='fscss'>
+<script src="https://combinatronics.io/Figsh/FSCSS/refs/heads/4.0.1/fscss_exec.js" async=""></script>
+</head>
+<section id="box">
+<div name=box></div>
+<div name=box></div>
+<div name=box></div>
+<div name=box></div>
+<div name=box></div>
+<div name=box></div>
+<div name=box></div>
+<div name=box></div>
+</section>
+<style>
+#box{
+  width: 350px;
+  height: 80px;
+  border: 2px solid red;
+  overflow-y: hidden;
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+#box $(name: box){
+  display: inline-block;
+}
+</style>
