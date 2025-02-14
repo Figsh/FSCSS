@@ -1,9 +1,9 @@
 //test.fscss
 $primary-color: midnightblue;
-$Border-stk: 3px solid $primary-color!;
+$Border-stk: 3px solid #59f;
 $(name: box){
 %2(width, height[:100px;])
-Border: $border-stk;
+Border: $Border-st!;
 Background-color: mx(#,'e');
 }
 Re(animationSettings:'3s linear infinite alternate forwards') 
