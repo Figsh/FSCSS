@@ -3,7 +3,7 @@ $primary-color: midnightblue;
 $Border-stk: 3px solid #59f;
 $(name: box){
 %2(width, height[:100px;])
-Border: $Border-st!;
+Border: $Border-stk!;
 Background-color: mx(#,'e');
 }
 Re(animationSettings:'3s linear infinite alternate forwards') 
