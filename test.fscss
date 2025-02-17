@@ -1,5 +1,5 @@
 //test.fscss
-$primary-color: midnightblue;
+$primary-color:midnightblue;
 $Border-stk: 3px solid #59f;
 $(name: box){
 %2(width, height[:100px;])
