@@ -20,11 +20,11 @@
   "exports": {
     ".": {
       "require": "./index.js",
-      "import": "./fscss_exec.js"
+      "import": "./index.mjs"
     },
     "./package.json": "./package.json",
     "./async": "./async.js",
-    "./objectifier": "./objectifier.js",
+    "./objectifier": "./obje.js",
     "./parser": "./parser.js",
     "./process-result": "./process-result.js",
     "./sync": "./sync.js"
