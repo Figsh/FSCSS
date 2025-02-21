@@ -1,4 +1,4 @@
-let objectify = require('./objectifier')
+let objectify = require('./obje')
 let parse = require('./parser')
 let async = require('./async')
 let sync = require('./sync')
