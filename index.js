@@ -1,5 +1,5 @@
 let objectify = require('./obje')
-let parse = require('./parser')
+let parse = require('./fscss_exec')
 let async = require('./async')
 let sync = require('./sync')
 
