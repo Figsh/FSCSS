@@ -25,7 +25,7 @@
     "./package.json": "./package.json",
     "./async": "./async.js",
     "./objectifier": "./obje.js",
-    "./parser": "./parser.js",
+    "./parser": "./fscss_exec.js",
     "./process-result": "./process-result.js",
     "./sync": "./sync.js"
   },
