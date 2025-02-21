@@ -1,0 +1,42 @@
+{
+  "name": "fs_css",
+  "version": "4.0.1",
+  "description": "FSCSS for CSS shorthands notations",
+  "keywords": [
+    "fs_css",
+    "fscss-runner",
+    "js",
+    "inline",
+    "reat",
+    "css",
+    "cssinjs"
+  ],
+  "author": "Andrey Sitnik <andrey@sitnik.ru>",
+  "license": "MIT",
+  "repository": "Figsh/FSCSS",
+  "engines": {
+    "node": "^12 || ^14 || >= 16"
+  },
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "import": "./fscss_exec.js"
+    },
+    "./package.json": "./package.json",
+    "./async": "./async.js",
+    "./objectifier": "./objectifier.js",
+    "./parser": "./parser.js",
+    "./process-result": "./process-result.js",
+    "./sync": "./sync.js"
+  },
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/postcss/"
+  },
+  "peerDependencies": {
+    "postcss": "^8.4.21"
+  },
+  "dependencies": {
+    "camelcase-css": "^2.0.1"
+  }
+}
