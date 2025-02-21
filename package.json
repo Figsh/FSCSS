@@ -13,7 +13,7 @@
   ],
   "author": "Andrey Sitnik <andrey@sitnik.ru>",
   "license": "MIT",
-  "repository": "Figsh/FSCSS",
+  "repository": "FSCSS/4.0.1",
   "engines": {
     "node": "^12 || ^14 || >= 16"
   },
