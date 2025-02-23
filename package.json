@@ -11,7 +11,7 @@
     "css",
     "cssinjs"
   ],
-  "author": "Andrey Sitnik <andrey@sitnik.ru>",
+  "author": "David hux",
   "license": "MIT",
   "repository": "FSCSS/4.0.1",
   "engines": {
@@ -30,13 +30,13 @@
     "./sync": "./sync.js"
   },
   "funding": {
-    "type": "opencollective",
-    "url": "https://opencollective.com/postcss/"
+    "type": "github",
+    "url": "https://github.com/Figsh"
   },
   "peerDependencies": {
-    "postcss": "^8.4.21"
+    "fscss": "^4.0.1"
   },
   "dependencies": {
-    "camelcase-css": "^2.0.1"
+    "fshscript": "^2.1.0"
   }
 }
