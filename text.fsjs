@@ -1,3 +1,5 @@
+#inf @import(#./async.fshs);
+#inf >> then((e), (inf:process))
 #file >>  @exsp new: text.fsjs, @v4.0;
 #editable >> @exsp new:{
 sym('e', data);
