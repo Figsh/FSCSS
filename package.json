@@ -30,8 +30,8 @@
     "./sync": "./sync.js"
   },
   "funding": {
-    "type": "github",
-    "url": "https://github.com/Figsh"
+    "type": "opencollective",
+    "url": "https://opencollective.com/fscss"
   },
   "peerDependencies": {
     "fscss": "^4.0.1"
