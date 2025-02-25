@@ -1,4 +1,4 @@
-//test.fscss
+/*test.fscss*/
 $primary-color:midnightblue;
 $Border-stk: 3px solid #59f;
 $(name: box){
