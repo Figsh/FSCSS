@@ -1,30 +1,36 @@
-<input>
+
+<form action="/send-email" method="POST">
+  <input type="text" name="name" placeholder="Your name" required>
+  <input type="email" name="email" placeholder="Your email" required>
+  <textarea name="message" placeholder="Your message"></textarea>
+  <button type="submit">Send</button>
+</form>
 <script>
-function sendMail(name, email, subject, message) {
-  const myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.set('Authorization', 'Basic ' + btoa('<API Key>'+":" +'<Secret Key>'));
+const express = require('express');
+const bodyParser = require('body-parser');
+const axios = require('axios');
 
-  const data = JSON.stringify({
-    "Messages": [{
-      "From": {"Email": "safetyunion5550@gmail.com", "Name": "<YOUR NAME>"},
-      "To": [{"Email": email, "Name": name}],
-      "Subject": subject,
-      "TextPart": message
-    }]
-  });
+const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
 
-  const requestOptions = {
-    method: 'POST',
-    headers: myHeaders,
-    body: data,
-  };
+app.post('/send-email', async (req, res) => {
+  const { name, email, message } = req.body;
 
-  fetch("https://api.mailjet.com/v3.1/send", requestOptions)
-    .then(response => response.text())
-    .then(result => console.log(result))
-    .catch(error => console.log('error', error));
-}
+  try {
+    await axios.post('https://api.elasticemail.com/v2/email/send', null, {
+      params: {
+        apikey: 'C5FC5013CB66E54DB284E9D00526599862E1FF74276091DF42E6A26F0EEAED5AE2FC10C658B3D5BCF0B5463ECF3D7324',
+        subject: 'New Form Submission',
+        from: 'safetyunion5550@gmail.com',
+        to: 'davidhux22@gmail.com',
+        bodyHtml: `<p>Name: ${name}</p><p>Email: ${email}</p><p>Message: ${message}</p>`
+      }
+    });
+    res.send('Email sent successfully!');
+  } catch (error) {
+    res.status(500).send('Failed to send email');
+  }
+});
 
-sendMail('Test Name',"davidhux22@gmail.com",'Test Subject','Test Message')
+app.listen(3000, () => console.log('Server running on port 3000'));
 </script>
