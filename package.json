@@ -1,0 +1,42 @@
+{
+  "name": "fs_css",
+  "version": "4.0.1",
+  "description": "FSCSS for CSS shorthands notations",
+  "keywords": [
+    "fs_css",
+    "fscss-runner",
+    "js",
+    "inline",
+    "reat",
+    "css",
+    "cssinjs"
+  ],
+  "author": "David hux",
+  "license": "MIT",
+  "repository": "FSCSS/4.0.1",
+  "engines": {
+    "node": "^12 || ^14 || >= 16"
+  },
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "import": "./index.mjs"
+    },
+    "./package.json": "./package.json",
+    "./async": "./async.js",
+    "./objectifier": "./obje.js",
+    "./parser": "./fscss_exec.js",
+    "./process-result": "./process-result.js",
+    "./sync": "./sync.js"
+  },
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/fscss"
+  },
+  "peerDependencies": {
+    "fscss": "^4.0.1"
+  },
+  "dependencies": {
+    "fshscript": "^2.1.0"
+  }
+}
