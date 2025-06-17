@@ -6,7 +6,7 @@ Website "fscss-ttr on dev.to, Figsh on ekumedia.netlify.app / on codepen.io / on
 this is not the complete working FSCSS script, try and use fscss from npm package ( npm install fscss) or using it CDN.
 Edited on 11:29pm Tue Jun 17 2025.
 version updated on /\/ source v6, package v1 up.
-please don't copy this script and don't use this link without, updating it from the fscss npm package, if you don't understand contact us on Facebook(exFSCSS)
+please don't copy this script and don't use this link without using it directly from the fscss npm package or cdns, if you don't understand contact us on Facebook(exFSCSS)
 `;
 function repeatString(str, count) {
   str = str.replace(/^['"]|['"]$/g, '');
