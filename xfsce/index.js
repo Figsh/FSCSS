@@ -106,5 +106,5 @@ try {
   processStyles();
   processDrawElements();
 } catch (error) {
-  console.error('Error processing styles or draw elements:', error);
+  console.error('Error processing styles from fscss[xfce] root or draw elements:', error);
 }
