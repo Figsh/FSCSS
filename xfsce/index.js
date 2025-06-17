@@ -1,17 +1,23 @@
-// Function to dynamically repeat a string
+const athorNote =`
+FSCSS execution functions using high quantity jsRegex with low normal javascript properties and functions.
+Readable FSCSS execution script.
+Credit "Figsh the publisher, David-Hux the writer, and your salf the user".
+Website "fscss-ttr on dev.to, Figsh on ekumedia.netlify.app / on codepen.io / on stackoverflow.com.
+this is not the complete working FSCSS script, try and use fscss from npm package ( npm install fscss) or using it CDN.
+Edited on 11:29pm Tue Jun 17 2025.
+version updated on /\/ source v6, package v1 up.
+please don't copy this script and don't use this link without, updating it from the fscss npm package, if you don't understand contact us on Facebook(exFSCSS)
+`;
 function repeatString(str, count) {
-  // Handle single or double quotes
-  str = str.replace(/^['"]|['"]$/g, ''); // Remove quotes
-  return str.repeat(Math.max(0, parseInt(count))); // Ensure non-negative count
+  str = str.replace(/^['"]|['"]$/g, '');
+  return str.repeat(Math.max(0, parseInt(count)));
 }
-
-// Helper function to handle `re` replacements
 function replaceRe(css) {
   const reRegex = /re\(([^:]*)(?::\s*|\,\s*)(?:i\:?\s*)?(?:"([^"]*)"|'([^']*)')\)([^}]*)(\1)([^}]*)/gi;
   let newCss = css;
   let previousCss = '';
   let iterations = 0;
-  const maxIterations = 100; // Prevent infinite loops
+  const maxIterations = 1000; // Prevent infinite loops
 
   while (newCss !== previousCss && iterations < maxIterations) {
     previousCss = newCss;
@@ -28,8 +34,6 @@ function replaceRe(css) {
 
   return newCss;
 }
-
-// Main function to process CSS styles
 function processStyles() {
   const styleElements = document.querySelectorAll('style');
   
@@ -40,32 +44,18 @@ function processStyles() {
 
   styleElements.forEach((element) => {
     let css = element.innerHTML;
-
-    // Replace mxs(...) and $p(...) with CSS properties (e.g., mxs(prop, value) -> prop:value;)
     css = css.replace(/(?:mxs|\$p)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,
       `$2:$14$15;$4:$14$15;$6:$14$15;$8:$14$15;$10:$14$15;$12:$14$15;`);
-
-    // Replace mx(...) and $m(...) with concatenated values
     css = css.replace(/(?:mx|\$m)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,
       `$2$14$15$4$14$15$6$14$15$8$14$15$10$14$15$12$14$15`);
-
-    // Replace rpt(count, string) with repeated string
     css = css.replace(/rpt\((\d+)\,\s*("([^"]*)"|'([^']*)')\)/gi, (match, count, quotedStr, doubleQuoted, singleQuoted) => {
       const str = doubleQuoted || singleQuoted;
       return repeatString(quotedStr, count);
     });
-
-    // Replace CSS custom properties (e.g., $var: value; -> :root{--var: value})
     css = css.replace(/\$(([\_\-\d\w]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi, `:root{--$1}`);
-
-    // Replace variable usage (e.g., $var -> var(--var))
     css = css.replace(/\$([^\!\s]+)!/gi, `var(--$1)`).replace(/\$([\w\-\_\d]+)/gi, `var(--$1)`);
-
-    // Replace vendor prefixes (e.g., -*-prop: value; -> -webkit-prop: value; -moz-prop: value; ...)
     css = css.replace(/\-\*\-(([^\:]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,
       `-webkit-$1-moz-$1-ms-$1-o-$1`);
-
-    // Replace %i, %6, %5, %4, %3, %2, %1 patterns
     css = css.replace(/%i\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,
       `$2$21$4$21$6$21$8$21$10$21$12$21$14$21$16$21$18$21$20$21`)
       .replace(/%6\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,
@@ -82,15 +72,11 @@ function processStyles() {
         `$2$3`)
       .replace(/@import\(\s*\exec\((.*)(.{5})\)\s*\)/gi, `@import url("$1css")`).replace(/\$\(\s*@keyframes\s*(\S+)\)/gi,`$1{animation-name:$1;}@keyframes $1`).replace(/\$\(\s*(\@[\w\-\*]*)\s*([^\{\}\,&]*)(\s*,\s*[^\{\}&]*)?&?(\[([^\{\}]*)\])?\s*\)/gi,`$2$3{animation:$2 $5;}$1 $2`).replace(/\$\(\s*--([^\{\}]*)\)/gi, `$1`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi, `[$1='$2']`).replace(/g\(([^"'\,]*)\,\s*(("([^"]*)"|'([^']*)')\,\s*)?("([^"]*)"|'([^']*)')\s*\)/gi, `$1 $4$5$1 $7$8`)
       .replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi, `[$1='$2']`).replace(/\$\(([^\:^\)]*)\)/gi, `[$1]`);
-
-    // Apply re replacement
     css = replaceRe(css);
 
     element.innerHTML = css;
   });
 }
-
-// Process .draw elements for text stroke
 function processDrawElements() {
   const drawElements = document.querySelectorAll('.draw');
   
@@ -100,8 +86,6 @@ function processDrawElements() {
     element.style.webkitTextStroke = `2px ${currentColor}`;
   });
 }
-
-// Execute the processing
 try {
   processStyles();
   processDrawElements();
