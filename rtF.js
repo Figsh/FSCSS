@@ -16,7 +16,6 @@ const fscssStyleURL = Array.from(document.querySelectorAll('link[rel="stylesheet
 function applyFSCSS({ type, content }) {
   if (!content || (Array.isArray(content) && content.length === 0)) {
     console.error("❌ No stylesheets provided to applyFSCSS");
-    alert("⚠️ No stylesheet URLs found. Please ensure stylesheets are linked in the document.");
     return;
   }
 
@@ -41,7 +40,6 @@ function applyFSCSS({ type, content }) {
         console.error(`❌ Failed to apply stylesheet: ${stylesheetUrl}`);
         console.error(`🔍 Error details:`, error.message || error);
         console.error(`📋 Stack trace:`, error.stack || 'No stack trace available');
-        alert(`⚠️ Failed to load stylesheet: ${stylesheetUrl}. Check console for details.`);
       }
     });
   });
@@ -58,5 +56,4 @@ if (fscssStyleURL.length > 0) {
   });
 } else {
   console.warn("⚠️ No stylesheets found in the document");
-  alert("⚠️ No stylesheets available to apply.");
 }
