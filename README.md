@@ -57,3 +57,25 @@ $init-outline: 1px groove #235000;
 $init-color: #521;`
 });
 ```
+Simple code for Testing:
+```html
+<h1>TEST</h1>
+<div>FSCSS</div>
+<style>
+  $bg-color: #000;
+  body{
+    Background: $bg-color;
+   }
+  Re(animationSettings, '3s linear infinite') 
+  $(@keyframes change, h1, div &[animationSettings]){
+    0%{background: RED;
+      %2(Width,
+      Height[:0;])
+      }
+    100%{ background: #00f;
+      %2(width, height[:150px;]) 
+     } 
+</style>
+<script src="https://cdn.jsdelivr.net/npm/fscss@1.1.6/exec.min.js" async></script>
+```
+
