@@ -1,4 +1,4 @@
-//test.fscss
+/*test.fscss*/
 $primary-color:midnightblue;
 $Border-stk: 3px solid #59f;
 $(name: box){
@@ -6,7 +6,8 @@ $(name: box){
 Border: $Border-stk!;
 Background-color: mx(#,'e');
 }
-Re(animationSettings:'3s linear infinite alternate forwards') 
+re(animationSettings, '3s linear infinite alternate forwards') 
+
 $(@keyframes div, $(name: box) &[animationSettings]){
 0%{ rotate: 0;} 
 100%{rotate: 360deg;} 
