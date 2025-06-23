@@ -6,8 +6,9 @@ $(name: box){
 Border: $Border-stk!;
 Background-color: mx(#,'e');
 }
+/*
 re(animationSettings, '3s linear infinite alternate forwards') 
-
+*/
 $(@keyframes animate, div, $(name: box) &[animationSettings]){
 0%{ rotate: 0;} 
 100%{rotate: 360deg;} 
