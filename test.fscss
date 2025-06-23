@@ -8,7 +8,7 @@ Background-color: mx(#,'e');
 }
 re(animationSettings, '3s linear infinite alternate forwards') 
 
-$(@keyframes div, $(name: box) &[animationSettings]){
+$(@keyframes animate, div, $(name: box) &[animationSettings]){
 0%{ rotate: 0;} 
 100%{rotate: 360deg;} 
 } 
