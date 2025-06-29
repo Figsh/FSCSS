@@ -1,0 +1,11 @@
+if [$.include mx]{ mx = $.append('mx')
+properties = mx.min(1).maxs(6);
+value=mx.createVarContainer(1, per(properties));
+if [%n]{ mx.nameBy('%'+n+'('+mx.min(0).max(n)+'['+value+'])');} 
+$.return(properties, value);
+}
+if [$.include mxs] mxs = $.append(mx){
+properties = mxs.min(1).maxs(6);
+value=mxs.createVarContainer(':'+1+';', per(properties));
+$.return(properties, value);
+} 
