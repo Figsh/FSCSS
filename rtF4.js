@@ -21,7 +21,7 @@ function procP(text) {
   return text.replace(/%(\d+)\(([^[]+)\[\s*([^\]]+)\]\)/g, (match, number, properties, value) => {
     const propList = properties.split(',').map(p => p.trim());
     if (propList.length != number) {
-      console.warn(`Number of properties ${propList.length} does not match %${number}`);
+      console.warn(`fscss: Number of properties ${propList.length} does not match %${number} in %${number}()`);
       return match;
     }
     return propList.map(prop => `${prop}${value}`).join(" ");
