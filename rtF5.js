@@ -24,7 +24,7 @@ function procP(text) {
       console.warn(`fscss: Number of properties ${propList.length} does not match %${number} in %${number}()`);
       return match;
     }
-    return propList.map(prop => `${prop}${value}`).join(" ");
+    return propList.map(prop => `${prop}${value}`).join("");
   });
 }
 function transformCssValues(css){let customProperties=new Set();let transformedCss=css;const copyRegex=/(:\s*)(["']?)(.*?)(["']?)\s*copy\(([-]?\d+),\s*([^\;^\)^\(^,^ ]*)\)/g;transformedCss=transformedCss.replace(copyRegex,(match,prefix,quote1,value,quote2,lengthStr,variableName)=>{const length=parseInt(lengthStr);let extractedValue='';if(length>=0){extractedValue=value.substring(0,length);}else{extractedValue=value.substring(value.length+length);}customProperties.add(`--${variableName.replace(/[^a-zA-Z0-9_-]/g,'')}:${extractedValue};`);return `${prefix}${quote1}${value}${quote2}`;});if(customProperties.size>0){const rootBlock=`:root{\n${Array.from(customProperties).join('\n')}\n}`;transformedCss+=`\n${rootBlock}`;}return transformedCss;} function repeatString(str,count){str=str.replace(/^['"]|['"]$/g,'');return str.repeat(Math.max(0,parseInt(count)))}function replaceRe(css) {
