@@ -2,7 +2,7 @@
  * FSCSS Processing Script
  * 
  * Credit: 
- *   - Figsh (Publisher)
+ *   - EKUYIK SAM as Figsh (Publisher)
  *   - David-Hux (Writer)
  *   - Current User (Implementer)
  * 
@@ -15,11 +15,11 @@
  * Last Edited: 11:29pm Tue Jun 17 2025
  * 
  * Note: Use official npm package/CDN instead of copying this directly.
- *       Contact: Facebook (exFSCSS) for support.
+ *       Contact: Facebook (FSCSS) for support.
  */
 function procFun(code) {
   const variables = {};
-  
+
   function parseStyle(styleStr) {
     const props = {};
     const lines = styleStr.split(';');
@@ -27,60 +27,65 @@ function procFun(code) {
       line = line.trim();
       if (!line) continue;
       const colonIdx = line.indexOf(':');
-      if (colonIdx === -1) continue;
+      if (colonIdx === -1) {
+        console.warn(`fscss[@fun] Invalid style line (missing colon): "${line}"`);
+        continue;
+      }
       const prop = line.substring(0, colonIdx).trim();
       const value = line.substring(colonIdx + 1).trim();
       if (prop) {
         props[prop] = value;
+      } else {
+        console.warn(`fscss[@fun] Empty property name in line: "${line}"`);
       }
     }
     return props;
   }
-  
+
   const funRegex = /@fun\(([\w\-\_\—0-9]+)\)\s*\{([\s\S]*?)\}\s*/g;
   let funMatch;
   while ((funMatch = funRegex.exec(code)) !== null) {
     const varName = funMatch[1];
     const rawStyles = funMatch[2].trim();
+    if (variables[varName]) {
+      console.warn(`fscss[@fun] Duplicate @fun variable declaration: "${varName}". The last one will overwrite previous declarations.`);
+    }
     variables[varName] = {
       raw: rawStyles,
       props: parseStyle(rawStyles)
     };
   }
-  
+
   let processedCode = code;
-  
-  // Handle value extraction (e.g., @fun.varname2.bg.value)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\.value/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return variables[varName].props[prop];
+    } else {
+      console.warn(`fscss[@fun] Value extraction failed for "@fun.${varName}.${prop}.value". Variable or property not found.`);
     }
     return match;
   });
-  
-  // Handle single property rule (e.g., @fun.varname2.background)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return `${prop}: ${variables[varName].props[prop]};`;
+    } else {
+      console.warn(`fscss[@fun] Single property rule failed for "@fun.${varName}.${prop}". Variable or property not found.`);
     }
     return match;
   });
-  
-  // Handle full variable block (e.g., @fun.varname2)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)(?=[\s;}])/g, (match, varName) => {
     if (variables[varName]) {
       return variables[varName].raw;
+    } else {
+      console.warn(`fscss[@fun] Full variable block replacement failed for "@fun.${varName}". Variable not found.`);
     }
     return match;
   });
-  
-  // Clean up code
   processedCode = processedCode.replace(/@fun\(([\w\-\_\d\—]+)\s*\{[\s\S]*?\}\s*/g, '');
   processedCode = processedCode.replace(/\/\/.*$/gm, '');
   processedCode = processedCode.replace(/^\s*[\r\n]/gm, '');
   processedCode = processedCode.trim();
-  
-  return processedCode;
+return processedCode;
 }
 function procP(text) {
   return text.replace(/%(\d+)\(([^[]+)\[\s*([^\]]+)\]\)/g, (match, number, properties, value) => {
