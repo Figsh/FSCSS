@@ -17,6 +17,71 @@
  * Note: Use official npm package/CDN instead of copying this directly.
  *       Contact: Facebook (exFSCSS) for support.
  */
+function procFun(code) {
+  const variables = {};
+  
+  function parseStyle(styleStr) {
+    const props = {};
+    const lines = styleStr.split(';');
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      const colonIdx = line.indexOf(':');
+      if (colonIdx === -1) continue;
+      const prop = line.substring(0, colonIdx).trim();
+      const value = line.substring(colonIdx + 1).trim();
+      if (prop) {
+        props[prop] = value;
+      }
+    }
+    return props;
+  }
+  
+  const funRegex = /@fun\(([\w\-\_\—0-9]+)\)\s*\{([\s\S]*?)\}\s*/g;
+  let funMatch;
+  while ((funMatch = funRegex.exec(code)) !== null) {
+    const varName = funMatch[1];
+    const rawStyles = funMatch[2].trim();
+    variables[varName] = {
+      raw: rawStyles,
+      props: parseStyle(rawStyles)
+    };
+  }
+  
+  let processedCode = code;
+  
+  // Handle value extraction (e.g., @fun.varname2.bg.value)
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\.value/g, (match, varName, prop) => {
+    if (variables[varName] && variables[varName].props[prop]) {
+      return variables[varName].props[prop];
+    }
+    return match;
+  });
+  
+  // Handle single property rule (e.g., @fun.varname2.background)
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)/g, (match, varName, prop) => {
+    if (variables[varName] && variables[varName].props[prop]) {
+      return `${prop}: ${variables[varName].props[prop]};`;
+    }
+    return match;
+  });
+  
+  // Handle full variable block (e.g., @fun.varname2)
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)(?=[\s;}])/g, (match, varName) => {
+    if (variables[varName]) {
+      return variables[varName].raw;
+    }
+    return match;
+  });
+  
+  // Clean up code
+  processedCode = processedCode.replace(/@fun\(([\w\-\_\d\—]+)\s*\{[\s\S]*?\}\s*/g, '');
+  processedCode = processedCode.replace(/\/\/.*$/gm, '');
+  processedCode = processedCode.replace(/^\s*[\r\n]/gm, '');
+  processedCode = processedCode.trim();
+  
+  return processedCode;
+}
 function procP(text) {
   return text.replace(/%(\d+)\(([^[]+)\[\s*([^\]]+)\]\)/g, (match, number, properties, value) => {
     const propList = properties.split(',').map(p => p.trim());
@@ -65,4 +130,4 @@ function transformCssValues(css){let customProperties=new Set();let transformedC
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
-}function processStyles(){const styleElements=document.querySelectorAll('style');if(!styleElements.length){console.warn('No <style> elements found.');return}styleElements.forEach(element=>{let css=element.innerHTML;css=transformCssValues(css);css=css.replace(/(?:mxs|\$p)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,`$2:$14$15;$4:$14$15;$6:$14$15;$8:$14$15;$10:$14$15;$12:$14$15;`).replace(/(?:mx|\$m)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,`$2$14$15$4$14$15$6$14$15$8$14$15$10$14$15$12$14$15`).replace(/rpt\((\d+)\,\s*("([^"]*)"|'([^']*)')\)/gi,(match,count,quotedStr,doubleQuoted,singleQuoted)=>repeatString(quotedStr,count)).replace(/\$(([\_\-\d\w]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,`:root{--$1}`).replace(/\$([^\!\s]+)!/gi,`var(--$1)`).replace(/\$([\w\-\_\d]+)/gi,`var(--$1)`).replace(/\-\*\-(([^\:]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,`-webkit-$1-moz-$1-ms-$1-o-$1`).replace(/%i\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$21$4$21$6$21$8$21$10$21$12$21$14$21$16$21$18$21$20$21`).replace(/%6\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$13$4$13$6$13$8$13$10$13$12$13`).replace(/%5\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$11$4$11$6$11$8$11$10$11`).replace(/%4\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$9$4$9$6$9$8$9`).replace(/%3\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$7$4$7$6$7`).replace(/%2\((([^\,\[\]]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$5$4$5`).replace(/%1\((([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$3`).replace(/@import\(\s*\exec\((.*)(.{5})\)\s*\)/gi,`@import url("$1css")`).replace(/\$\(\s*@keyframes\s*(\S+)\)/gi,`$1{animation-name:$1;}@keyframes $1`).replace(/\$\(\s*(\@[\w\-\*]*)\s*([^\{\}\,&]*)(\s*,\s*[^\{\}&]*)?&?(\[([^\{\}]*)\])?\s*\)/gi,`$2$3{animation:$2 $5;}$1 $2`).replace(/\$\(\s*--([^\{\}]*)\)/gi,`$1`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi,`[$1='$2']`).replace(/g\(([^"'\,]*)\,\s*(("([^"]*)"|'([^']*)')\,\s*)?("([^"]*)"|'([^']*)')\s*\)/gi,`$1 $4$5$1 $7$8`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi,`[$1='$2']`).replace(/\$\(([^\:^\)]*)\)/gi,`[$1]`);css=replaceRe(css);css=procP(css);element.innerHTML=css})}function processDrawElements(){const drawElements=document.querySelectorAll('.draw');drawElements.forEach(element=>{const currentColor=element.style.color||'#000';element.style.color='transparent';element.style.webkitTextStroke=`2px ${currentColor}`})}try{processStyles();processDrawElements()}catch(error){console.error('Error processing styles or draw elements:',error)}
+}function processStyles(){const styleElements=document.querySelectorAll('style');if(!styleElements.length){console.warn('No <style> elements found.');return}styleElements.forEach(element=>{let css=element.innerHTML;css=procFun(css);css=transformCssValues(css);css=css.replace(/(?:mxs|\$p)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,`$2:$14$15;$4:$14$15;$6:$14$15;$8:$14$15;$10:$14$15;$12:$14$15;`).replace(/(?:mx|\$m)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,`$2$14$15$4$14$15$6$14$15$8$14$15$10$14$15$12$14$15`).replace(/rpt\((\d+)\,\s*("([^"]*)"|'([^']*)')\)/gi,(match,count,quotedStr,doubleQuoted,singleQuoted)=>repeatString(quotedStr,count)).replace(/\$(([\_\-\d\w]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,`:root{--$1}`).replace(/\$([^\!\s]+)!/gi,`var(--$1)`).replace(/\$([\w\-\_\d]+)/gi,`var(--$1)`).replace(/\-\*\-(([^\:]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,`-webkit-$1-moz-$1-ms-$1-o-$1`).replace(/%i\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$21$4$21$6$21$8$21$10$21$12$21$14$21$16$21$18$21$20$21`).replace(/%6\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$13$4$13$6$13$8$13$10$13$12$13`).replace(/%5\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$11$4$11$6$11$8$11$10$11`).replace(/%4\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$9$4$9$6$9$8$9`).replace(/%3\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$7$4$7$6$7`).replace(/%2\((([^\,\[\]]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$5$4$5`).replace(/%1\((([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$3`).replace(/@import\(\s*\exec\((.*)(.{5})\)\s*\)/gi,`@import url("$1css")`).replace(/\$\(\s*@keyframes\s*(\S+)\)/gi,`$1{animation-name:$1;}@keyframes $1`).replace(/\$\(\s*(\@[\w\-\*]*)\s*([^\{\}\,&]*)(\s*,\s*[^\{\}&]*)?&?(\[([^\{\}]*)\])?\s*\)/gi,`$2$3{animation:$2 $5;}$1 $2`).replace(/\$\(\s*--([^\{\}]*)\)/gi,`$1`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi,`[$1='$2']`).replace(/g\(([^"'\,]*)\,\s*(("([^"]*)"|'([^']*)')\,\s*)?("([^"]*)"|'([^']*)')\s*\)/gi,`$1 $4$5$1 $7$8`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi,`[$1='$2']`).replace(/\$\(([^\:^\)]*)\)/gi,`[$1]`);css=replaceRe(css);css=procP(css);element.innerHTML=css})}function processDrawElements(){const drawElements=document.querySelectorAll('.draw');drawElements.forEach(element=>{const currentColor=element.style.color||'#000';element.style.color='transparent';element.style.webkitTextStroke=`2px ${currentColor}`})}try{processStyles();processDrawElements()}catch(error){console.error('Error processing styles or draw elements:',error)}
