@@ -636,8 +636,7 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
 // Fixed version: Proper async handling
 async function procImp(css) {
   try {
-    const processedCSS = await processImports(css); // Await the async processImports
-    console.log(processedCSS);
+    const processedCSS = await processImports(css);
     return processedCSS;
   } catch (error) {
     console.error('Processing failed:', error);
