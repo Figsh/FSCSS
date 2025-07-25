@@ -1,4 +1,22 @@
-
+/**
+ * FSCSS Processing Script
+ * 
+ * Credit: 
+ *   - EKUYIK SAM as Figsh (Publisher)
+ *   - David-Hux (Writer)
+ *   - Current User (Implementer)
+ * 
+ * Resources:
+ *   - fscss-ttr on dev.to
+ *   - Figsh on ekumedia.netlify.app, codepen.io, stackoverflow.com
+ *   - npm package: fscss (npm install fscss)
+ * 
+ * Version: source v6, package v1+
+ * Last Edited: 11:29pm Tue Jun 17 2025
+ * 
+ * Note: Use official npm package/CDN instead of copying this directly.
+ *       Contact: Facebook (FSCSS) for support.
+ */
 const arraysExfscss = {}; // Renamed the global variable
 const orderedxFscssRandom = {};
 
