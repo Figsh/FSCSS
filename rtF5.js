@@ -563,30 +563,6 @@ function applyFscssTransformations(css) {
   return css;
 }
 
-// Processes all <style> elements in document
-function processStyles() {
-  const styleElements = document.querySelectorAll('style');
-  
-  if (!styleElements.length) {
-    console.warn('No <style> elements found.');
-    return;
-  }
-
-  styleElements.forEach(element => {
-    let css = element.textContent;
-    css = processImports(css);
-    css = procFun(css);
-    css=procRan(css);
-    css = procArr(css);
-    css = transformCssValues(css);      // Process copy() functions
-    css = applyFscssTransformations(css); // Apply all other transformations
-    css = replaceRe(css);
-    // Process recursive patterns
-    element.innerHTML = css;
-  });
-}
-
-// Applies text-stroke effect to .draw elements
 
 // Main execution with error handling
 async function processImports(cssText, depth = 0, baseURL = window.location.href) { // Mark as async
