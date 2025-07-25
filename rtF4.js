@@ -18,7 +18,7 @@
  *       Contact: Facebook (FSCSS) for support.
  */
 const orderedxFscssRandom = {};
-
+const exfMAX_DEPTH = 10;
 function procRan(input) {
   return input.replace(/@random\(\[([^\]]+)\](?:, *ordered)?\)/g, (match, valuesStr) => {
     const isOrdered = /, *ordered\)/.test(match);
@@ -215,4 +215,100 @@ function transformCssValues(css){let customProperties=new Set();let transformedC
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
-}function processStyles(){const styleElements=document.querySelectorAll('style');if(!styleElements.length){console.warn('No <style> elements found.');return}styleElements.forEach(element=>{let css=element.innerHTML;css=procFun(css);css=procRan(css);css=procArr(css);css=transformCssValues(css);css=css.replace(/(?:mxs|\$p)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,`$2:$14$15;$4:$14$15;$6:$14$15;$8:$14$15;$10:$14$15;$12:$14$15;`).replace(/(?:mx|\$m)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi,`$2$14$15$4$14$15$6$14$15$8$14$15$10$14$15$12$14$15`).replace(/rpt\((\d+)\,\s*("([^"]*)"|'([^']*)')\)/gi,(match,count,quotedStr,doubleQuoted,singleQuoted)=>repeatString(quotedStr,count)).replace(/\$(([\_\-\d\w]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,`:root{--$1}`).replace(/\$([^\!\s]+)!/gi,`var(--$1)`).replace(/\$([\w\-\_\d]+)/gi,`var(--$1)`).replace(/\-\*\-(([^\:]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi,`-webkit-$1-moz-$1-ms-$1-o-$1`).replace(/%i\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$21$4$21$6$21$8$21$10$21$12$21$14$21$16$21$18$21$20$21`).replace(/%6\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$13$4$13$6$13$8$13$10$13$12$13`).replace(/%5\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$11$4$11$6$11$8$11$10$11`).replace(/%4\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$9$4$9$6$9$8$9`).replace(/%3\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$7$4$7$6$7`).replace(/%2\((([^\,\[\]]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$5$4$5`).replace(/%1\((([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi,`$2$3`).replace(/@import\(\s*\exec\((.*)(.{5})\)\s*\)/gi,`@import url("$1css")`).replace(/\$\(\s*@keyframes\s*(\S+)\)/gi,`$1{animation-name:$1;}@keyframes $1`).replace(/\$\(\s*(\@[\w\-\*]*)\s*([^\{\}\,&]*)(\s*,\s*[^\{\}&]*)?&?(\[([^\{\}]*)\])?\s*\)/gi,`$2$3{animation:$2 $5;}$1 $2`).replace(/\$\(\s*--([^\{\}]*)\)/gi,`$1`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi,`[$1='$2']`).replace(/g\(([^"'\,]*)\,\s*(("([^"]*)"|'([^']*)')\,\s*)?("([^"]*)"|'([^']*)')\s*\)/gi,`$1 $4$5$1 $7$8`).replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi,`[$1='$2']`).replace(/\$\(([^\:^\)]*)\)/gi,`[$1]`);css=replaceRe(css);css=procP(css);element.innerHTML=css})}function processDrawElements(){const drawElements=document.querySelectorAll('.draw');drawElements.forEach(element=>{const currentColor=element.style.color||'#000';element.style.color='transparent';element.style.webkitTextStroke=`2px ${currentColor}`})}try{processStyles();processDrawElements()}catch(error){console.error('Error processing styles or draw elements:',error)}
+}
+async function processImports(cssText, depth = 0, baseURL = window.location.href) { // Mark as async
+  if (depth > exfMAX_DEPTH) {
+    console.warn('Maximum import depth exceeded. Skipping further imports.');
+    return cssText;
+  }
+
+  const importRegex = /@import\s*\(\s*exec\s*\(\s*((?:'[^']*'|"[^"]*"|[^'")]\S*)\s*)\)\s*\)/g;
+  const matches = Array.from(cssText.matchAll(importRegex));
+
+  if (matches.length === 0) return cssText;
+
+  // Await the resolution of all import promises
+  const fetchedContents = await Promise.all(
+    matches.map(async (match) => {
+      const [fullMatch, urlSpec] = match;
+      try {
+        const cleanUrl = urlSpec.replace(/^['"](.*)['"]$/, '$1').trim();
+        const absoluteUrl = new URL(cleanUrl, baseURL).href;
+
+        const response = await fetch(absoluteUrl); // Await fetch
+        if (!response.ok) throw new Error(`HTTP ${response.status} for ${absoluteUrl}`);
+
+        const importedText = await response.text(); // Await text()
+        return processImports(importedText, depth + 1, absoluteUrl); // Recursive call should also be awaited if it were directly used, but here it's fine as it returns a Promise
+      } catch (error) {
+        console.error(`Failed to import "${urlSpec}" from "${baseURL}":`, error);
+        return `/* Error importing "${urlSpec}": ${error.message} */`;
+      }
+    })
+  );
+
+  // Now, fetchedContents holds the actual processed CSS strings
+  let lastIndex = 0;
+  let result = '';
+  matches.forEach((match, i) => {
+    result += cssText.slice(lastIndex, match.index);
+    result += fetchedContents[i]; // Use the resolved content
+    lastIndex = match.index + match[0].length;
+  });
+  result += cssText.slice(lastIndex);
+
+  return result;
+}
+
+// Fixed version: Proper async handling
+async function procImp(css) {
+  try {
+    const processedCSS = await processImports(css); // Await the async processImports
+    console.log(processedCSS);
+    return processedCSS;
+  } catch (error) {
+    console.error('Processing failed:', error);
+    console.warn(`fscss[@import] Warning: can't resolve imports`);
+    return css; // Return original CSS as fallback
+  }
+}
+
+// Update processStyles to await async operations
+async function processStyles() {
+  const styleElements = document.querySelectorAll('style');
+
+  if (!styleElements.length) {
+    console.warn('No <style> elements found.');
+    return;
+  }
+
+  for (const element of styleElements) { // Use for...of to await inside loop
+    let css = element.textContent;
+    css = await procImp(css); // Await procImp
+    css = procFun(css);
+    css = procRan(css);
+    css = procArr(css);
+    css = transformCssValues(css);
+    css = applyFscssTransformations(css);
+    css = replaceRe(css);
+    element.innerHTML = css;
+  }
+}
+function processDrawElements() {
+  document.querySelectorAll('.draw').forEach(element => {
+    const originalColor = element.style.color || '#000';
+    element.style.color = 'transparent';
+    element.style.webkitTextStroke = `2px ${originalColor}`;
+  });
+}
+
+// Main execution with error handling
+(async () => { // Use an IIFE to await the top-level call
+  try {
+    await processStyles();
+    await processDrawElements(); // This can run after styles are processed
+  } catch (error) {
+    console.error('Error processing styles or draw elements:', error);
+  }
+})();
+
