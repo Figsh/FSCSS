@@ -466,7 +466,6 @@ function replaceRe(css) {
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
 }
-
 function applyFscssTransformations(css) {
     
     css = css.replace(/(?:mxs|\$p)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi, '$2:$14$15;$4:$14$15;$6:$14$15;$8:$14$15;$10:$14$15;$12:$14$15;')
@@ -554,5 +553,5 @@ async function procImp(css) {
     console.error('Processing failed:', error);
     console.warn(`fscss[@import] Warning: can't resolve imports`);
     return css;
-  }}async function processStyles(){const styleElements = document.querySelectorAll('style');if (!styleElements.length){console.warn('No <style> elements found.');return;}for(const element of styleElements){let css=element.textContent;css = await procImp(css);css = procFun(css);css = procRan(css);css = procArr(css);css = transformCssValues(css);css = applyFscssTransformations(css);css = replaceRe(css);element.innerHTML = css;}}
+  }}async function processStyles(){const styleElements = document.querySelectorAll('style');if (!styleElements.length){console.warn('No <style> elements found.');return;}for(const element of styleElements){let css=element.textContent;css = await procImp(css);css = procFun(css);css = procRan(css);css = procArr(css);css = transformCssValues(css);css =applyFscssTransformations(css);css = replaceRe(css);element.innerHTML = css;}}
 function processDrawElements(){document.querySelectorAll('.draw').forEach(element=>{const originalColor = element.style.color || '#000';element.style.color = 'transparent';element.style.webkitTextStroke = `2px ${originalColor}`;});}(async()=>{try {await processStyles();await processDrawElements();} catch(error){console.error('Error processing styles or draw elements:', error);}})();
