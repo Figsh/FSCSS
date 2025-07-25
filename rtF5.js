@@ -17,7 +17,24 @@
  * Note: Use official npm package/CDN instead of copying this directly.
  *       Contact: Facebook (FSCSS) for support.
  */
+function procNum(css){
+const regex = /num\((.*?)\)/g;
+function evaluateExpression(expression) {
+  try {
+    return eval(expression);
+  } catch (e) {
+    console.error('Invalid expression:', expression);
+    return expression;
+  }
+}
 
+const processedCSS = css.replace(regex, (match, expression) => {
+  
+  return evaluateExpression(expression);
+});
+
+return (processedCSS);
+  }
 const arraysExfscss = {}; // Renamed the global variable
 const orderedxFscssRandom = {};
 
@@ -639,6 +656,7 @@ async function processStyles() {
     css = transformCssValues(css);
     css = applyFscssTransformations(css);
     css = replaceRe(css);
+    css = procNum(css);
     element.innerHTML = css;
   }
 }
