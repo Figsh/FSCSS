@@ -17,7 +17,7 @@
  * Note: Use official npm package/CDN instead of copying this directly.
  *       Contact: Facebook (FSCSS) for support.
  */
-const arraysExfscss={};const orderedxFscssRandom = {};const exfMAX_DEPTH = 0;function procRan(input){
+const arraysExfscss={};const orderedxFscssRandom = {};const exfMAX_DEPTH = 10;function procRan(input){
   return input.replace(/@random\(\[([^\]]+)\](?:, *ordered)?\)/g, (match, valuesStr) => {
     const isOrdered = /, *ordered\)/.test(match);
     const values = valuesStr.split(',').map(v => v.trim());
@@ -27,17 +27,17 @@ const arraysExfscss={};const orderedxFscssRandom = {};const exfMAX_DEPTH = 0;fun
           index: 0,
         };console.warn(`fscss[@random] Warning: New ordered sequence created for [${valuesStr}].`);}const store = orderedxFscssRandom[sequenceKey];const val = store.values[store.index % store.values.length];if (store.index >= store.values.length && store.index % store.values.length === 0){console.warn(`fscss[@random] Warning: Ordered sequence [${valuesStr}] is looping back to the beginning.`);}store.index++;return val;
     } else {
-      // Regular random selection
+      
       const randIndex = Math.floor(Math.random() * values.length);
       return values[randIndex];
     }
   });
 }
 function procArr(input) {
-    // Clear previous arrays
+    
     for (const key in arraysExfscss) delete arraysExfscss[key];
 
-    // Parse array declarations
+    
     const arrayRegex = /@arr\(([\w\-\_\—0-9]+)\[([^\]]+)\]\)/g;
     let match;
     while ((match = arrayRegex.exec(input)) !== null) {
@@ -46,7 +46,7 @@ function procArr(input) {
         arraysExfscss[arrayName] = arrayValues;
     }
 
-    // Process array loops
+    
     let output = input.replace(/([^{}]*?)\{([^}]*?@arr\.([\w\-\_\—0-9]+)\[][^}]*?)\}/g,
         (fullMatch, selector, content, arrayName) => {
             if (!arraysExfscss[arrayName]) {
@@ -64,7 +64,7 @@ function procArr(input) {
             }).join('\n');
         });
 
-    // Process specific array accessors (@arr.name[index])
+    
     output = output.replace(/@arr\.([\w\-\_\—0-9]+)\[(\d+)\]/g,
         (fullMatch, arrayName, index) => {
             const idx = parseInt(index) - 1;
@@ -75,8 +75,6 @@ function procArr(input) {
             }
             return arraysExfscss[arrayName]?.[idx] || fullMatch;
         });
-
-    // Remove array declarations and comments
     return output
         .replace(/@arr\(([\w\-\_\—0-9]+)\[([^\]]+)\]\)/g, '')
         .replace(/\n{3,}/g, '\n\n')
@@ -121,11 +119,7 @@ function procFun(code) {
       props: parseStyle(rawStyles)
     };
   }
-
-  let processedCode = code;
-
-  // Handle value extraction (e.g., @fun.varname2.bg.value)
-  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\.value/g, (match, varName, prop) => {
+let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\.value/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return variables[varName].props[prop];
     } else {
@@ -133,8 +127,6 @@ function procFun(code) {
     }
     return match;
   });
-
-  // Handle single property rule (e.g., @fun.varname2.background)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return `${prop}: ${variables[varName].props[prop]};`;
@@ -143,8 +135,6 @@ function procFun(code) {
     }
     return match;
   });
-
-  // Handle full variable block (e.g., @fun.varname2)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)(?=[\s;}])/g, (match, varName) => {
     if (variables[varName]) {
       return variables[varName].raw;
@@ -153,31 +143,21 @@ function procFun(code) {
     }
     return match;
   });
-
-  // Clean up code
   processedCode = processedCode.replace(/@fun\(([\w\-\_\d\—]+)\s*\{[\s\S]*?\}\s*/g, '');
   processedCode = processedCode.replace(/^\s*[\r\n]/gm, '');
   processedCode = processedCode.trim();
 
   return processedCode;
-}
-
-// Extracts values using copy() and creates CSS custom properties
-function flattenNestedCSS(css, options = {}) {
+}function flattenNestedCSS(css, options = {}) {
   const {
     preserveComments = false,
     indent = '  ',
     validate = true,
     errorHandler = (msg) => console.warn(msg),
   } = options;
-
-  // Remove comments unless preserved
   if (!preserveComments) {
     css = css.replace(/\/\*[\s\S]*?\*\//g, '').trim();
-  }
-
-  function isValidSelector(selector) {
-    // Allow modern CSS features (:has(), > selector, etc.)
+  }function isValidSelector(selector) {
     return selector && selector.trim() !== '' && 
            !/[^a-zA-Z0-9\-_@*.\#:,\s>&~+()\[\]'"]|\/\//.test(selector);
   }
@@ -238,8 +218,6 @@ function flattenNestedCSS(css, options = {}) {
           } else {
             fullSelector = block.parent ? `${block.parent} ${block.selector}` : block.selector;
           }
-          
-          // Parse nested content
           const nested = parseNestedContent(current, fullSelector);
           
           if (nested.properties.length > 0 || nested.keyframes.length > 0) {
@@ -257,7 +235,6 @@ function flattenNestedCSS(css, options = {}) {
           current += char;
         }
       } else if (char === '@' && !inString && depth === 0) {
-        // Handle at-rules at root level
         const atRuleEnd = findAtRuleEnd(css, pos);
         if (atRuleEnd === -1) break;
         
@@ -350,13 +327,13 @@ function flattenNestedCSS(css, options = {}) {
         depth--;
         current += char;
         if (depth === 0) {
-          // Found a complete nested block
+          
           const block = parseBlock(current, 0, parentSelector).output;
           result.nestedBlocks += block;
           current = '';
         }
       } else if (char === ';' && !inString && depth === 0) {
-        // Property handling
+        
         const prop = current.trim();
         if (prop) {
           if (isValidProperty(prop)) {
@@ -383,7 +360,6 @@ function flattenNestedCSS(css, options = {}) {
       pos++;
     }
     
-    // Handle trailing property
     const lastProp = current.trim();
     if (lastProp && depth === 0) {
       if (isValidProperty(lastProp)) {
@@ -429,7 +405,7 @@ function transformCssValues(css) {
     return `${prefix}${quote1}${value}${quote2}`;
   });
 
-  // Append custom properties to :root if any were created
+  
   if (customProperties.size > 0) {
     const rootBlock = `:root{${Array.from(customProperties).join('\n')}\n}`;
     return transformedCss + `\n${rootBlock}`;
@@ -437,12 +413,12 @@ function transformCssValues(css) {
   return transformedCss;
 }
 
-// Repeats a string while handling quotes
+
 function repeatString(str, count) {
   return str.replace(/^['"]|['"]$/g, '').repeat(Math.max(0, parseInt(count)));
 }
 
-// Processes recursive CSS patterns (re() function)
+
 function replaceRe(css) {
   // Enhanced regex to capture re() declarations with flexibility
  const reRegex = /(?:store|str|re)\(\s*([^:,]+)\s*[,:]\s*(?:"([^"]*)"|'([^']*)')\s*\)/gi;
