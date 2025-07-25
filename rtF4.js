@@ -1,43 +1,53 @@
-/**
- * FSCSS Processing Script
- * 
- * Credit: 
- *   - EKUYIK SAM as Figsh (Publisher)
- *   - David-Hux (Writer)
- *   - Current User (Implementer)
- * 
- * Resources:
- *   - fscss-ttr on dev.to
- *   - Figsh on ekumedia.netlify.app, codepen.io, stackoverflow.com
- *   - npm package: fscss (npm install fscss)
- * 
- * Version: source v6, package v1+
- * Last Edited: 11:29pm Tue Jun 17 2025
- * 
- * Note: Use official npm package/CDN instead of copying this directly.
- *       Contact: Facebook (FSCSS) for support.
- */
-const arraysExfscss={};const orderedxFscssRandom = {};const exfMAX_DEPTH = 10;function procRan(input){
+
+const arraysExfscss = {}; // Renamed the global variable
+const orderedxFscssRandom = {};
+
+const exfMAX_DEPTH = 10; // Prevent infinite recursion
+
+
+function procRan(input) {
   return input.replace(/@random\(\[([^\]]+)\](?:, *ordered)?\)/g, (match, valuesStr) => {
     const isOrdered = /, *ordered\)/.test(match);
     const values = valuesStr.split(',').map(v => v.trim());
-    if(values.length === 0){console.warn("fscss[@random] Warning: Empty array provided for @random. Returning empty string.");return '';}if(isOrdered){const sequenceKey = values.join(':');
-    if (!orderedxFscssRandom[sequenceKey]){orderedxFscssRandom[sequenceKey] = {
+    
+    if (values.length === 0) {
+      console.warn("fscss[@random] Warning: Empty array provided for @random. Returning empty string.");
+      return '';
+    }
+    
+    if (isOrdered) {
+      // Create consistent key for value sequences
+      const sequenceKey = values.join(':');
+      
+      if (!orderedxFscssRandom[sequenceKey]) {
+        orderedxFscssRandom[sequenceKey] = {
           values,
           index: 0,
-        };console.warn(`fscss[@random] Warning: New ordered sequence created for [${valuesStr}].`);}const store = orderedxFscssRandom[sequenceKey];const val = store.values[store.index % store.values.length];if (store.index >= store.values.length && store.index % store.values.length === 0){console.warn(`fscss[@random] Warning: Ordered sequence [${valuesStr}] is looping back to the beginning.`);}store.index++;return val;
-    } else {
+        };
+        console.warn(`fscss[@random] Warning: New ordered sequence created for [${valuesStr}].`);
+      }
       
+      const store = orderedxFscssRandom[sequenceKey];
+      const val = store.values[store.index % store.values.length];
+      
+      if (store.index >= store.values.length && store.index % store.values.length === 0) {
+        console.warn(`fscss[@random] Warning: Ordered sequence [${valuesStr}] is looping back to the beginning.`);
+      }
+      
+      store.index++;
+      return val;
+    } else {
+      // Regular random selection
       const randIndex = Math.floor(Math.random() * values.length);
       return values[randIndex];
     }
   });
 }
 function procArr(input) {
-    
+    // Clear previous arrays
     for (const key in arraysExfscss) delete arraysExfscss[key];
 
-    
+    // Parse array declarations
     const arrayRegex = /@arr\(([\w\-\_\â€”0-9]+)\[([^\]]+)\]\)/g;
     let match;
     while ((match = arrayRegex.exec(input)) !== null) {
@@ -46,7 +56,7 @@ function procArr(input) {
         arraysExfscss[arrayName] = arrayValues;
     }
 
-    
+    // Process array loops
     let output = input.replace(/([^{}]*?)\{([^}]*?@arr\.([\w\-\_\â€”0-9]+)\[][^}]*?)\}/g,
         (fullMatch, selector, content, arrayName) => {
             if (!arraysExfscss[arrayName]) {
@@ -64,7 +74,7 @@ function procArr(input) {
             }).join('\n');
         });
 
-    
+    // Process specific array accessors (@arr.name[index])
     output = output.replace(/@arr\.([\w\-\_\â€”0-9]+)\[(\d+)\]/g,
         (fullMatch, arrayName, index) => {
             const idx = parseInt(index) - 1;
@@ -75,6 +85,8 @@ function procArr(input) {
             }
             return arraysExfscss[arrayName]?.[idx] || fullMatch;
         });
+
+    // Remove array declarations and comments
     return output
         .replace(/@arr\(([\w\-\_\â€”0-9]+)\[([^\]]+)\]\)/g, '')
         .replace(/\n{3,}/g, '\n\n')
@@ -119,7 +131,11 @@ function procFun(code) {
       props: parseStyle(rawStyles)
     };
   }
-let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â€”0-9]+)\.([\w\-\_\â€”0-9]+)\.value/g, (match, varName, prop) => {
+
+  let processedCode = code;
+
+  // Handle value extraction (e.g., @fun.varname2.bg.value)
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\â€”0-9]+)\.([\w\-\_\â€”0-9]+)\.value/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return variables[varName].props[prop];
     } else {
@@ -127,6 +143,8 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
     }
     return match;
   });
+
+  // Handle single property rule (e.g., @fun.varname2.background)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\â€”0-9]+)\.([\w\-\_\â€”0-9]+)/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return `${prop}: ${variables[varName].props[prop]};`;
@@ -135,6 +153,8 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
     }
     return match;
   });
+
+  // Handle full variable block (e.g., @fun.varname2)
   processedCode = processedCode.replace(/@fun\.([\w\-\_\â€”0-9]+)(?=[\s;}])/g, (match, varName) => {
     if (variables[varName]) {
       return variables[varName].raw;
@@ -143,21 +163,31 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
     }
     return match;
   });
+
+  // Clean up code
   processedCode = processedCode.replace(/@fun\(([\w\-\_\d\â€”]+)\s*\{[\s\S]*?\}\s*/g, '');
   processedCode = processedCode.replace(/^\s*[\r\n]/gm, '');
   processedCode = processedCode.trim();
 
   return processedCode;
-}function flattenNestedCSS(css, options = {}) {
+}
+
+// Extracts values using copy() and creates CSS custom properties
+function flattenNestedCSS(css, options = {}) {
   const {
     preserveComments = false,
     indent = '  ',
     validate = true,
     errorHandler = (msg) => console.warn(msg),
   } = options;
+
+  // Remove comments unless preserved
   if (!preserveComments) {
     css = css.replace(/\/\*[\s\S]*?\*\//g, '').trim();
-  }function isValidSelector(selector) {
+  }
+
+  function isValidSelector(selector) {
+    // Allow modern CSS features (:has(), > selector, etc.)
     return selector && selector.trim() !== '' && 
            !/[^a-zA-Z0-9\-_@*.\#:,\s>&~+()\[\]'"]|\/\//.test(selector);
   }
@@ -218,6 +248,8 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
           } else {
             fullSelector = block.parent ? `${block.parent} ${block.selector}` : block.selector;
           }
+          
+          // Parse nested content
           const nested = parseNestedContent(current, fullSelector);
           
           if (nested.properties.length > 0 || nested.keyframes.length > 0) {
@@ -235,6 +267,7 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
           current += char;
         }
       } else if (char === '@' && !inString && depth === 0) {
+        // Handle at-rules at root level
         const atRuleEnd = findAtRuleEnd(css, pos);
         if (atRuleEnd === -1) break;
         
@@ -327,13 +360,13 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
         depth--;
         current += char;
         if (depth === 0) {
-          
+          // Found a complete nested block
           const block = parseBlock(current, 0, parentSelector).output;
           result.nestedBlocks += block;
           current = '';
         }
       } else if (char === ';' && !inString && depth === 0) {
-        
+        // Property handling
         const prop = current.trim();
         if (prop) {
           if (isValidProperty(prop)) {
@@ -360,6 +393,7 @@ let processedCode = code;processedCode = processedCode.replace(/@fun\.([\w\-\_\â
       pos++;
     }
     
+    // Handle trailing property
     const lastProp = current.trim();
     if (lastProp && depth === 0) {
       if (isValidProperty(lastProp)) {
@@ -405,7 +439,7 @@ function transformCssValues(css) {
     return `${prefix}${quote1}${value}${quote2}`;
   });
 
-  
+  // Append custom properties to :root if any were created
   if (customProperties.size > 0) {
     const rootBlock = `:root{${Array.from(customProperties).join('\n')}\n}`;
     return transformedCss + `\n${rootBlock}`;
@@ -413,12 +447,12 @@ function transformCssValues(css) {
   return transformedCss;
 }
 
-
+// Repeats a string while handling quotes
 function repeatString(str, count) {
   return str.replace(/^['"]|['"]$/g, '').repeat(Math.max(0, parseInt(count)));
 }
 
-
+// Processes recursive CSS patterns (re() function)
 function replaceRe(css) {
   // Enhanced regex to capture re() declarations with flexibility
  const reRegex = /(?:store|str|re)\(\s*([^:,]+)\s*[,:]\s*(?:"([^"]*)"|'([^']*)')\s*\)/gi;
@@ -435,7 +469,7 @@ function replaceRe(css) {
   // If no variables found, return cleaned CSS
   if (variableMap.size === 0) return cleanedCss;
 
-  
+  // Step 2: Replace variables throughout the CSS
   let changed;
   let iterations = 0;
   const maxIterations = 100;
@@ -466,21 +500,25 @@ function replaceRe(css) {
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
 }
+
+
+// Applies all FSCSS transformations to CSS content
 function applyFscssTransformations(css) {
-    
+    // Handle mx/mxs padding shorthands
     css = css.replace(/(?:mxs|\$p)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi, '$2:$14$15;$4:$14$15;$6:$14$15;$8:$14$15;$10:$14$15;$12:$14$15;')
     .replace(/(?:mx|\$m)\((([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,)?(([^\,]*)\,\s*)?("([^"]*)"|'([^']*)')\)/gi, '$2$14$15$4$14$15$6$14$15$8$14$15$10$14$15$12$14$15')
     
-    
+    // Handle string repetition (rpt)
     .replace(/rpt\((\d+)\,\s*("([^"]*)"|'([^']*)')\)/gi, (match, count, quotedStr) => repeatString(quotedStr, count))
     
-    
+    // Process CSS variable declarations and references
     .replace(/\$(([\_\-\d\w]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi, ':root{--$1}')
     .replace(/\$([^\!\s]+)!/gi, 'var(--$1)')
     .replace(/\$([\w\-\_\d]+)/gi, 'var(--$1)')
     
+    // Handle vendor prefix expansion
   .replace(/\-\*\-(([^\:]+)\:(\"[^\"]*\"|\'[^\']*\'|[^\;]*)\;)/gi, '-webkit-$1-moz-$1-ms-$1-o-$1')
-  
+  // Process list-based shorthands (%i, %6-%1)
   .replace(/%i\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi, '$2$21$4$21$6$21$8$21$10$21$12$21$14$21$16$21$18$21$20$21')
     .replace(/%6\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*)\,)?(([^\,\[\]]*))?\s*\[([^\]\[]*)\]\)/gi, '$2$13$4$13$6$13$8$13$10$13$12$13')
     .replace(/%5\((([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\[\]]*)\,)?(([^\,\]\[]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi, '$2$11$4$11$6$11$8$11$10$11')
@@ -491,22 +529,47 @@ function applyFscssTransformations(css) {
   css = procP(css);
     css=css.replace(/@import\(\s*\exec\((.*)(.{5})\)\s*\)/gi, '@import url("$1css")')
     
-    
+    // Process animation shorthands
    .replace(/\$\(\s*@keyframes\s*(\S+)\)/gi, '$1{animation-name:$1;}@keyframes $1')
     .replace(/\$\(\s*(\@[\w\-\*]*)\s*([^\{\}\,&]*)(\s*,\s*[^\{\}&]*)?&?(\[([^\{\}]*)\])?\s*\)/gi, '$2$3{animation:$2 $5;}$1 $2')
     
-    
+    // Process property references
     .replace(/\$\(\s*--([^\{\}]*)\)/gi, '$1')
     .replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi, '[$1=\'$2\']')
     
-    
+    // Handle grouping syntax (g)
     .replace(/g\(([^"'\s]*)\,\s*(("([^"]*)"|'([^']*)')\,\s*)?("([^"]*)"|'([^']*)')\s*\)/gi, '$1 $4$5$1 $7$8')
     .replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi, '[$1=\'$2\']')
     .replace(/\$\(([^\:^\)]*)\)/gi, '[$1]');
   return css;
 }
 
+// Processes all <style> elements in document
+function processStyles() {
+  const styleElements = document.querySelectorAll('style');
+  
+  if (!styleElements.length) {
+    console.warn('No <style> elements found.');
+    return;
+  }
 
+  styleElements.forEach(element => {
+    let css = element.textContent;
+    css = processImports(css);
+    css = procFun(css);
+    css=procRan(css);
+    css = procArr(css);
+    css = transformCssValues(css);      // Process copy() functions
+    css = applyFscssTransformations(css); // Apply all other transformations
+    css = replaceRe(css);
+    // Process recursive patterns
+    element.innerHTML = css;
+  });
+}
+
+// Applies text-stroke effect to .draw elements
+
+// Main execution with error handling
 async function processImports(cssText, depth = 0, baseURL = window.location.href) { // Mark as async
   if (depth > exfMAX_DEPTH) {
     console.warn('Maximum import depth exceeded. Skipping further imports.');
@@ -517,6 +580,8 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
   const matches = Array.from(cssText.matchAll(importRegex));
 
   if (matches.length === 0) return cssText;
+
+  // Await the resolution of all import promises
   const fetchedContents = await Promise.all(
     matches.map(async (match) => {
       const [fullMatch, urlSpec] = match;
@@ -524,34 +589,79 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
         const cleanUrl = urlSpec.replace(/^['"](.*)['"]$/, '$1').trim();
         const absoluteUrl = new URL(cleanUrl, baseURL).href;
 
-        const response = await fetch(absoluteUrl);
+        const response = await fetch(absoluteUrl); // Await fetch
         if (!response.ok) throw new Error(`HTTP ${response.status} for ${absoluteUrl}`);
 
-        const importedText = await response.text();
-        return processImports(importedText, depth + 1, absoluteUrl);
+        const importedText = await response.text(); // Await text()
+        return processImports(importedText, depth + 1, absoluteUrl); // Recursive call should also be awaited if it were directly used, but here it's fine as it returns a Promise
       } catch (error) {
         console.error(`Failed to import "${urlSpec}" from "${baseURL}":`, error);
         return `/* Error importing "${urlSpec}": ${error.message} */`;
       }
     })
   );
+
+  // Now, fetchedContents holds the actual processed CSS strings
   let lastIndex = 0;
   let result = '';
   matches.forEach((match, i) => {
     result += cssText.slice(lastIndex, match.index);
-    result += fetchedContents[i]; 
+    result += fetchedContents[i]; // Use the resolved content
     lastIndex = match.index + match[0].length;
   });
   result += cssText.slice(lastIndex);
-return result;}
+
+  return result;
+}
+
+// Fixed version: Proper async handling
 async function procImp(css) {
   try {
     const processedCSS = await processImports(css); // Await the async processImports
-  
+    console.log(processedCSS);
     return processedCSS;
   } catch (error) {
     console.error('Processing failed:', error);
     console.warn(`fscss[@import] Warning: can't resolve imports`);
-    return css;
-  }}async function processStyles(){const styleElements = document.querySelectorAll('style');if (!styleElements.length){console.warn('No <style> elements found.');return;}for(const element of styleElements){let css=element.textContent;css = await procImp(css);css = procFun(css);css = procRan(css);css = procArr(css);css = transformCssValues(css);css =applyFscssTransformations(css);css = replaceRe(css);element.innerHTML = css;}}
-function processDrawElements(){document.querySelectorAll('.draw').forEach(element=>{const originalColor = element.style.color || '#000';element.style.color = 'transparent';element.style.webkitTextStroke = `2px ${originalColor}`;});}(async()=>{try {await processStyles();await processDrawElements();} catch(error){console.error('Error processing styles or draw elements:', error);}})();
+    return css; // Return original CSS as fallback
+  }
+}
+
+// Update processStyles to await async operations
+async function processStyles() {
+  const styleElements = document.querySelectorAll('style');
+
+  if (!styleElements.length) {
+    console.warn('No <style> elements found.');
+    return;
+  }
+
+  for (const element of styleElements) { // Use for...of to await inside loop
+    let css = element.textContent;
+    css = await procImp(css); // Await procImp
+    css = procFun(css);
+    css = procRan(css);
+    css = procArr(css);
+    css = transformCssValues(css);
+    css = applyFscssTransformations(css);
+    css = replaceRe(css);
+    element.innerHTML = css;
+  }
+}
+function processDrawElements() {
+  document.querySelectorAll('.draw').forEach(element => {
+    const originalColor = element.style.color || '#000';
+    element.style.color = 'transparent';
+    element.style.webkitTextStroke = `2px ${originalColor}`;
+  });
+}
+
+// Main execution with error handling
+(async () => { // Use an IIFE to await the top-level call
+  try {
+    await processStyles();
+    await processDrawElements(); // This can run after styles are processed
+  } catch (error) {
+    console.error('Error processing styles or draw elements:', error);
+  }
+})();
