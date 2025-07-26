@@ -119,7 +119,7 @@ function procEv(css) {
   }
 
   // Second pass: replace @event calls with their evaluated values
-  modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]+)\)/g, (match, funcName, argValue) => {
+  modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]*)\)/g, (match, funcName, argValue) => {
     argValue = argValue.trim();
     const func = functionMap[funcName];
     if (!func) {
