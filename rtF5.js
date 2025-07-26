@@ -166,6 +166,99 @@ function procEv(css) {
 
   return modifiedCSS;
 }
+function initlibraries(css){
+   return css;
+}
+function procVar(vcss){
+function processSCSS(scssCode) {
+  const globalVars = {};
+  let currentScopeVars = globalVars; // Initially global scope
+  const processedLines = [];
+  const lines = scssCode.split('\n');
+
+  // To manage nested scopes (simplified: just track if we're inside a block)
+  let inBlock = false;
+  const blockVars = {}; // Variables declared within the current block
+
+  // Step 1: Process lines to extract variables and build up processed CSS
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+
+    // Check for block entry
+    if (line.includes('{')) {
+      inBlock = true;
+      // When entering a block, any variables declared within it will go into blockVars
+      // The blockVars will be cleared when the block is exited
+      processedLines.push(line); // Add the curly brace to processed lines
+      continue; // Move to next line
+    }
+
+    // Check for block exit
+    if (line.includes('}')) {
+      inBlock = false;
+      // Clear block-level variables when exiting a block
+      for (const varName in blockVars) {
+        delete blockVars[varName]; // Remove block-scoped variables
+      }
+      processedLines.push(line); // Add the curly brace to processed lines
+      continue; // Move to next line
+    }
+
+    // Regex to match variable declarations (e.g., $primary-color: midnightblue;)
+    const varDeclarationRegex = /^\s*\$([a-zA-Z0-9_-]+)\s*:\s*([^;]+);/;
+    const varMatch = line.match(varDeclarationRegex);
+
+    if (varMatch) {
+      const [, varName, varValue] = varMatch;
+      if (inBlock) {
+        blockVars[varName] = varValue.trim();
+      } else {
+        globalVars[varName] = varValue.trim();
+      }
+      // This line is a declaration, so don't include it in the final CSS output
+      continue; // Move to next line
+    }
+
+    // Regex to match variable usage (e.g., $primary-color or $primary-color!)
+    const varUsageRegex = /\$([a-zA-Z0-9_-]+)(!)?/g;
+
+    // Replace variable references in the current line
+    line = line.replace(varUsageRegex, (match, varName) => {
+      // Prioritize block-scoped variables, then global variables
+      if (blockVars[varName] !== undefined) {
+        return blockVars[varName];
+      } else if (globalVars[varName] !== undefined) {
+        return globalVars[varName];
+      }
+      return match; // If variable not found, return original match (e.g., for non-existent variables)
+    });
+
+    processedLines.push(line);
+  }
+
+  // Step 2: Function to access variable values (for external access)
+  function getVariable(varName) {
+    // This function will only return global variables for external access,
+    // as local variables are transient during processing.
+    // If you need to expose local variables, you'd need a more complex
+    // data structure to store them along with their scope.
+    return globalVars[varName] || null;
+  }
+
+  // Join the processed lines back into a single CSS string
+  const finalCss = processedLines.join('\n');
+
+  return {
+    css: finalCss,
+    getVariable
+  };
+}
+
+
+const result = processSCSS(vcss);
+// Output the processed CSS
+ return result.css
+} 
 
 function procRan(input) {
   return input.replace(/@random\(\[([^\]]+)\](?:, *ordered)?\)/g, (match, valuesStr) => {
@@ -791,6 +884,8 @@ async function processStyles() {
   for (const element of styleElements) { // Use for...of to await inside loop
     let css = element.textContent;
     css = await procImp(css); // Await procImp
+    css = procVar(css);
+    css = initlibraries(css);
     css = procFun(css);
     css = procRan(css);
     css = procArr(css);
