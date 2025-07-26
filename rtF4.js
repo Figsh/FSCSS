@@ -39,6 +39,104 @@ const arraysExfscss = {}; // Renamed the global variable
 const orderedxFscssRandom = {};
 
 const exfMAX_DEPTH = 10; // Prevent infinite recursion
+function procEv(css) {
+  function extractBlock(str, start) {
+    if (str[start] !== '{') return null;
+    let count = 1;
+    let current = start + 1;
+    while (current < str.length && count > 0) {
+      if (str[current] === '{') count++;
+      else if (str[current] === '}') count--;
+      current++;
+    }
+    if (count !== 0) return null;
+    return {
+      content: str.substring(start + 1, current - 1),
+      endIndex: current
+    };
+  }
+  
+  function parseConditionBlocks(block) {
+    const regex = /(if|el-if|el)\s*(.*?){/g;
+    const blocks = [];
+    let match;
+    
+    while ((match = regex.exec(block)) !== null) {
+      const type = match[1];
+      const condition = match[2].trim();
+      const blockStart = match.index + match[0].length - 1;
+      
+      const innerBlock = extractBlock(block, blockStart);
+      if (!innerBlock) continue;
+      
+      blocks.push({
+        type,
+        condition,
+        block: innerBlock.content
+      });
+      
+      regex.lastIndex = blockStart + innerBlock.content.length + 2;
+    }
+    
+    return blocks;
+  }
+  
+  const functionMap = {};
+  const funcDefRegex = /@event\s+([\w-]+)\(([^)]+)\)\s*:?{/g;
+  let funcMatch;
+  let modifiedCSS = css;
+  
+  while ((funcMatch = funcDefRegex.exec(css)) !== null) {
+    const [fullMatch, funcName, args] = funcMatch;
+    const arg = args.trim();
+    const startIdx = funcMatch.index + fullMatch.length - 1;
+    
+    const blockData = extractBlock(css, startIdx);
+    if (!blockData) continue;
+    
+    const conditionBlocks = parseConditionBlocks(blockData.content);
+    functionMap[funcName] = { arg, conditionBlocks };
+    
+    modifiedCSS = modifiedCSS.substring(0, funcMatch.index) +
+      modifiedCSS.substring(blockData.endIndex);
+  }
+  
+  modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]+)\)/g, (match, funcName, argValue) => {
+    argValue = argValue.trim();
+    const func = functionMap[funcName];
+    if (!func) return match;
+    
+    let result = '';
+    let matched = false;
+    
+    for (const block of func.conditionBlocks) {
+      if (matched) break;
+      
+      const [condVar, condVal] = block.condition.split(':').map(s => s.trim());
+      
+      if (block.type === 'if' || block.type === 'el-if') {
+        if (condVar === func.arg && condVal === argValue) {
+          matched = true;
+        }
+      } else if (block.type === 'el') {
+        matched = true;
+      }
+      
+      if (matched) {
+        // Look for `e: value;` in the block content
+        const assignMatch = block.block.match(/(?:e|\w)\s*:\s*([^;]+);/);
+        if (assignMatch) {
+          result = assignMatch[1];
+        }
+        break;
+      }
+    }
+    
+    return result || match;
+  });
+  
+  return modifiedCSS;
+}
 
 
 function procRan(input) {
@@ -653,10 +751,11 @@ async function processStyles() {
     css = procFun(css);
     css = procRan(css);
     css = procArr(css);
+    css = procEv(css);
     css = transformCssValues(css);
     css = applyFscssTransformations(css);
     css = replaceRe(css);
-    css=procNum(css);
+    css = procNum(css);
     element.innerHTML = css;
   }
 }
