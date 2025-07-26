@@ -49,71 +49,94 @@ function procEv(css) {
       else if (str[current] === '}') count--;
       current++;
     }
-    if (count !== 0) return null;
+    if (count !== 0) {
+      console.warn(`fscss[@event] Warning: Unbalanced curly braces starting at index ${start}.`);
+      return null;
+    }
     return {
       content: str.substring(start + 1, current - 1),
       endIndex: current
     };
   }
-  
+
   function parseConditionBlocks(block) {
     const regex = /(if|el-if|el)\s*(.*?){/g;
     const blocks = [];
     let match;
-    
+
     while ((match = regex.exec(block)) !== null) {
       const type = match[1];
       const condition = match[2].trim();
       const blockStart = match.index + match[0].length - 1;
-      
+
       const innerBlock = extractBlock(block, blockStart);
-      if (!innerBlock) continue;
-      
+      if (!innerBlock) {
+        console.warn(`fscss[@event] Warning: Could not extract inner block for condition '${condition}' starting at index ${blockStart}.`);
+        continue;
+      }
+
       blocks.push({
         type,
         condition,
         block: innerBlock.content
       });
-      
+
       regex.lastIndex = blockStart + innerBlock.content.length + 2;
     }
-    
+
     return blocks;
   }
-  
+
   const functionMap = {};
   const funcDefRegex = /@event\s+([\w-]+)\(([^)]+)\)\s*:?{/g;
   let funcMatch;
   let modifiedCSS = css;
-  
+  let offset = 0; // To adjust for string manipulations
+
+  // First pass: extract function definitions and remove them from the CSS
   while ((funcMatch = funcDefRegex.exec(css)) !== null) {
     const [fullMatch, funcName, args] = funcMatch;
     const arg = args.trim();
     const startIdx = funcMatch.index + fullMatch.length - 1;
-    
+
     const blockData = extractBlock(css, startIdx);
-    if (!blockData) continue;
-    
+    if (!blockData) {
+      console.warn(`fscss[@event] Warning: Could not extract block for event definition '${funcName}' starting at index ${startIdx}.`);
+      continue;
+    }
+
     const conditionBlocks = parseConditionBlocks(blockData.content);
     functionMap[funcName] = { arg, conditionBlocks };
-    
-    modifiedCSS = modifiedCSS.substring(0, funcMatch.index) +
-      modifiedCSS.substring(blockData.endIndex);
+
+    // Remove the processed @event definition from the CSS
+    const replacementStart = funcMatch.index + offset;
+    const replacementEnd = blockData.endIndex + offset;
+    modifiedCSS = modifiedCSS.substring(0, replacementStart) +
+                   modifiedCSS.substring(replacementEnd);
+
+    // Adjust the offset for subsequent regex matches in the original string
+    offset -= (blockData.endIndex - funcMatch.index);
   }
-  
+
+  // Second pass: replace @event calls with their evaluated values
   modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]+)\)/g, (match, funcName, argValue) => {
     argValue = argValue.trim();
     const func = functionMap[funcName];
-    if (!func) return match;
-    
+    if (!func) {
+      console.warn(`fscss[@event] Warning: Event function '${funcName}' not found.`);
+      return match; // Return original match if function not found
+    }
+
     let result = '';
     let matched = false;
-    
+
     for (const block of func.conditionBlocks) {
-      if (matched) break;
-      
-      const [condVar, condVal] = block.condition.split(':').map(s => s.trim());
-      
+      if (matched) break; // If a condition has already matched, stop
+
+      const parts = block.condition.split(':').map(s => s.trim());
+      const condVar = parts[0];
+      const condVal = parts.length > 1 ? parts[1] : '';
+
       if (block.type === 'if' || block.type === 'el-if') {
         if (condVar === func.arg && condVal === argValue) {
           matched = true;
@@ -121,23 +144,28 @@ function procEv(css) {
       } else if (block.type === 'el') {
         matched = true;
       }
-      
+
       if (matched) {
-        // Look for `e: value;` in the block content
-        const assignMatch = block.block.match(/(?:e|\w)\s*:\s*([^;]+);/);
+        // Look for `e: value;` or any variable name followed by colon and value
+        const assignMatch = block.block.match(/(?:[a-zA-Z_]\w*)\s*:\s*([^;]+);/);
         if (assignMatch) {
-          result = assignMatch[1];
+          result = assignMatch[1].trim();
+        } else {
+          console.warn(`fscss[@event] Warning: No assignment found in block for condition '${block.condition}' in function '${funcName}'.`);
         }
-        break;
+        break; // A condition matched, so we stop
       }
     }
-    
-    return result || match;
+
+    if (!matched) {
+      console.warn(`fscss[@event] Warning: No condition matched for event call '${funcName}(${argValue})'.`);
+    }
+
+    return result || match; // Return the result or the original match if no result was found
   });
-  
+
   return modifiedCSS;
 }
-
 
 function procRan(input) {
   return input.replace(/@random\(\[([^\]]+)\](?:, *ordered)?\)/g, (match, valuesStr) => {
@@ -682,31 +710,44 @@ function applyFscssTransformations(css) {
 // Main execution with error handling
 async function processImports(cssText, depth = 0, baseURL = window.location.href) { // Mark as async
   if (depth > exfMAX_DEPTH) {
-    console.warn('Maximum import depth exceeded. Skipping further imports.');
+    console.warn(`fscss[@import] Warning: Maximum import depth (${exfMAX_DEPTH}) exceeded for base URL "${baseURL}". Skipping further imports.`);
     return cssText;
   }
 
   const importRegex = /@import\s*\(\s*exec\s*\(\s*((?:'[^']*'|"[^"]*"|[^'")]\S*)\s*)\)\s*\)/g;
   const matches = Array.from(cssText.matchAll(importRegex));
 
-  if (matches.length === 0) return cssText;
+  if (matches.length === 0) {
+    
+    return cssText;
+  }
+
+  
 
   // Await the resolution of all import promises
   const fetchedContents = await Promise.all(
     matches.map(async (match) => {
       const [fullMatch, urlSpec] = match;
+      let cleanUrl = urlSpec.replace(/^['"](.*)['"]$/, '$1').trim();
+      let absoluteUrl;
+
       try {
-        const cleanUrl = urlSpec.replace(/^['"](.*)['"]$/, '$1').trim();
-        const absoluteUrl = new URL(cleanUrl, baseURL).href;
+        absoluteUrl = new URL(cleanUrl, baseURL).href;
+        
 
         const response = await fetch(absoluteUrl); // Await fetch
-        if (!response.ok) throw new Error(`HTTP ${response.status} for ${absoluteUrl}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} for ${absoluteUrl}`);
+        }
 
         const importedText = await response.text(); // Await text()
-        return processImports(importedText, depth + 1, absoluteUrl); // Recursive call should also be awaited if it were directly used, but here it's fine as it returns a Promise
+        
+
+        // Recursive call should also be awaited for its promise to resolve
+        return await processImports(importedText, depth + 1, absoluteUrl);
       } catch (error) {
-        console.error(`Failed to import "${urlSpec}" from "${baseURL}":`, error);
-        return `/* Error importing "${urlSpec}": ${error.message} */`;
+        console.error(`fscss[@import] Error: Failed to import "${cleanUrl}" from "${baseURL}":`, error);
+        return `/* fscss[@import] Error importing "${cleanUrl}": ${error.message} */`;
       }
     })
   );
@@ -718,9 +759,11 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
     result += cssText.slice(lastIndex, match.index);
     result += fetchedContents[i]; // Use the resolved content
     lastIndex = match.index + match[0].length;
+    
   });
   result += cssText.slice(lastIndex);
 
+  console.log(`fscss[@import] Info: Finished processing imports at depth ${depth}.`);
   return result;
 }
 
