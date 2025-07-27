@@ -380,7 +380,7 @@ function procArr(input) {
     for (const key in arraysExfscss) delete arraysExfscss[key];
 
     // Parse array declarations
-    const arrayRegex = /@arr\(([\w\-\_\—0-9]+)\[([^\]]+)\]\)/g;
+    const arrayRegex = /@arr(?:\(|\s+)([\w\-\_\—0-9]+)\[([^\]]+)\]\)?/g;
     let match;
     while ((match = arrayRegex.exec(input)) !== null) {
         const arrayName = match[1];
@@ -420,7 +420,7 @@ function procArr(input) {
 
     // Remove array declarations and comments
     return output
-        .replace(/@arr\(([\w\-\_\—0-9]+)\[([^\]]+)\]\)/g, '')
+        .replace(/@arr(?:\(|\s+)([\w\-\_\—0-9]+)\[([^\]]+)\]\)?/g, '')
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 }
