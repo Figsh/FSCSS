@@ -260,6 +260,83 @@ const result = processSCSS(vcss);
  return result.css
 } 
 
+function procExt(css) {
+  let extractedVariables = {};
+  let tempCSS = css;
+
+  // Step 1: Process string literals
+  tempCSS = tempCSS.replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, function(fullMatch) {
+    let quote = fullMatch[0];
+    let content = fullMatch.slice(1, -1);
+    const directiveRegex = /@ext\((-?\d+),(\d+):\s*([^)]+)\)/g;
+    let match;
+    let directivesToProcess = [];
+
+    while ((match = directiveRegex.exec(content)) !== null) {
+      directivesToProcess.push({
+        fullMatch: match[0],
+        start: parseInt(match[1]),
+        length: parseInt(match[2]),
+        varName: match[3].trim(),
+        index: match.index
+      });
+    }
+
+    for (let i = directivesToProcess.length - 1; i >= 0; i--) {
+      let d = directivesToProcess[i];
+      let s = d.start < 0 ? content.length + d.start : d.start;
+      s = Math.max(0, s);
+      let extracted = content.substring(s, s + d.length);
+
+      if (s + d.length > content.length || s < 0) {
+        console.warn(`fscss:[@ext]Warning: @ext directive for variable '${d.varName}' in string literal specifies an out-of-bounds range. Extraction may be incomplete or incorrect.`);
+      }
+
+      if (extractedVariables[d.varName] !== undefined) {
+        console.warn(`fscss:[@ext]Warning: Duplicate variable name '${d.varName}' found in string literal. The last extracted value will be used.`);
+      }
+      extractedVariables[d.varName] = extracted;
+
+      // Remove @ext from content
+      content = content.slice(0, d.index) + content.slice(d.index + d.fullMatch.length);
+    }
+
+    return quote + content + quote;
+  });
+
+  // Step 2: Outside strings
+  tempCSS = tempCSS.replace(/([#.\w-]+)\s*@ext\((-?\d+),(\d+):\s*([^)]+)\)/g, function(match, token, start, len, varName) {
+    start = parseInt(start);
+    len = parseInt(len);
+    varName = varName.trim();
+    let s = start < 0 ? token.length + start : start;
+    s = Math.max(0, s);
+    let extracted = token.substring(s, s + len);
+
+    if (s + len > token.length || s < 0) {
+      console.warn(`fscss:[@ext]Warning: @ext directive for variable '${varName}' on token '${token}' specifies an out-of-bounds range. Extraction may be incomplete or incorrect.`);
+    }
+
+    if (extractedVariables[varName] !== undefined) {
+      console.warn(`fscss:[@ext]Warning: Duplicate variable name '${varName}' found outside string literals. The last extracted value will be used.`);
+    }
+    extractedVariables[varName] = extracted;
+    return token;
+  });
+
+  // Step 3: Replace @ext.varName references
+  tempCSS = tempCSS.replace(/@ext\.(\w+)/g, function(match, varName) {
+    if (extractedVariables[varName] === undefined) {
+      console.warn(`fscss:[@ext]Warning: Reference to undefined variable '@ext.${varName}'. It will not be replaced.`);
+      return match;
+    }
+    return extractedVariables[varName];
+  });
+
+  return tempCSS;
+}
+
+
 function procRan(input) {
   return input.replace(/@random\(\[([^\]]+)\](?:, *ordered)?\)/g, (match, valuesStr) => {
     const isOrdered = /, *ordered\)/.test(match);
@@ -894,6 +971,7 @@ async function processStyles() {
     css = applyFscssTransformations(css);
     css = replaceRe(css);
     css = procNum(css);
+    css = procExt(css);
     element.innerHTML = css;
   }
 }
