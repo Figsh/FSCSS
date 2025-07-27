@@ -220,7 +220,7 @@ function processSCSS(scssCode) {
     }
 
     // Regex to match variable usage (e.g., $primary-color or $primary-color!)
-    const varUsageRegex = /\$([a-zA-Z0-9_-]+)(!)?/g;
+    const varUsageRegex = /\$\/?([a-zA-Z0-9_-]+)(!)?/g;
 
     // Replace variable references in the current line
     line = line.replace(varUsageRegex, (match, varName) => {
@@ -325,7 +325,7 @@ function procExt(css) {
   });
 
   // Step 3: Replace @ext.varName references
-  tempCSS = tempCSS.replace(/@ext\.(\w+)/g, function(match, varName) {
+  tempCSS = tempCSS.replace(/@ext\.(\w+)\!?/g, function(match, varName) {
     if (extractedVariables[varName] === undefined) {
       console.warn(`fscss:[@ext]Warning: Reference to undefined variable '@ext.${varName}'. It will not be replaced.`);
       return match;
@@ -467,7 +467,7 @@ function procFun(code) {
   let processedCode = code;
 
   // Handle value extraction (e.g., @fun.varname2.bg.value)
-  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\.value/g, (match, varName, prop) => {
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\.value\!?/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return variables[varName].props[prop];
     } else {
@@ -477,7 +477,7 @@ function procFun(code) {
   });
 
   // Handle single property rule (e.g., @fun.varname2.background)
-  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)/g, (match, varName, prop) => {
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)\.([\w\-\_\—0-9]+)\!?/g, (match, varName, prop) => {
     if (variables[varName] && variables[varName].props[prop]) {
       return `${prop}: ${variables[varName].props[prop]};`;
     } else {
@@ -487,7 +487,7 @@ function procFun(code) {
   });
 
   // Handle full variable block (e.g., @fun.varname2)
-  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)(?=[\s;}])/g, (match, varName) => {
+  processedCode = processedCode.replace(/@fun\.([\w\-\_\—0-9]+)(?=[\s;}])\!?/g, (match, varName) => {
     if (variables[varName]) {
       return variables[varName].raw;
     } else {
@@ -961,6 +961,8 @@ async function processStyles() {
   for (const element of styleElements) { // Use for...of to await inside loop
     let css = element.textContent;
     css = await procImp(css); // Await procImp
+    css = replaceRe(css);
+    css = procExt(css);
     css = procVar(css);
     css = initlibraries(css);
     css = procFun(css);
@@ -968,10 +970,10 @@ async function processStyles() {
     css = procArr(css);
     css = procEv(css);
     css = transformCssValues(css);
-    css = applyFscssTransformations(css);
     css = replaceRe(css);
     css = procNum(css);
     css = procExt(css);
+     css = applyFscssTransformations(css);
     element.innerHTML = css;
   }
 }
