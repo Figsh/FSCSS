@@ -167,6 +167,9 @@ function procEv(css) {
   return modifiedCSS;
 }
 function initlibraries(css){
+  css = css.replace(/exec\(\s*_init\sisjs\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/isjs.fscss)");
+  css = css.replace(/exec\(\s*_init\sthemes\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/trshapes.fthemes.fscss)")
+  css = css.replace(/exec\(_init\sarray1to500\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/1to500.fscss)");
    return css;
 }
 function procVar(vcss){
@@ -960,11 +963,11 @@ async function processStyles() {
 
   for (const element of styleElements) { // Use for...of to await inside loop
     let css = element.textContent;
+    css = initlibraries(css);
     css = await procImp(css); // Await procImp
     css = replaceRe(css);
     css = procExt(css);
     css = procVar(css);
-    css = initlibraries(css);
     css = procFun(css);
     css = procRan(css);
     css = procArr(css);
