@@ -1054,7 +1054,6 @@ async function processStyles() {
     css = procNum(css);
     css = procExt(css);
      css = applyFscssTransformations(css);
-    css = procExC(css);
     element.innerHTML = css;
   }
 }
