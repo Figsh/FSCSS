@@ -8,7 +8,7 @@
  * 
  * Resources:
  *   - fscss-ttr on dev.to
- *   - Figsh on ekumedia.netlify.app, codepen.io, stackoverflow.com
+ *   - Figsh on youtube.com, codepen.io, stackoverflow.com
  *   - npm package: fscss (npm install fscss)
  * 
  * Version: source v6, package v1+
