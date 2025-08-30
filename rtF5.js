@@ -138,14 +138,10 @@ function procExC(css) {
 
     removalRanges.push([funcMatch.index, blockStart + fullBlock.length]);
   }
-
-  // Remove all function definitions from CSS
   for (let i = removalRanges.length - 1; i >= 0; i--) {
     const [start, end] = removalRanges[i];
     modifiedCSS = modifiedCSS.slice(0, start) + modifiedCSS.slice(end);
   }
-
-  // Second pass: replace @event calls
   modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]*)\)/g, (match, funcName, argValuesStr) => {
     const func = functionMap[funcName];
     if (!func) {
@@ -197,7 +193,6 @@ function procExC(css) {
             matched = true;
         } else {
             matched = conditions.every(cond => {
-                // Enhanced condition parsing with support for comparisons
                 const comparisonMatch = cond.match(/^(\w+)\s*(==|!=|>=|<=|>|<)\s*([^]+)$/);
                 if (comparisonMatch) {
                     const [, varName, operator, expected] = comparisonMatch;
@@ -206,7 +201,7 @@ function procExC(css) {
                         return false;
                     }
                     const actual = context[varName];
-                    // Convert to numbers if possible for numerical comparison
+                    
                     const numActual = isNaN(actual) ? actual : Number(actual);
                     const numExpected = isNaN(expected) ? expected : Number(expected);
                     switch (operator) {
@@ -219,7 +214,6 @@ function procExC(css) {
                         default: return false;
                     }
                 } else {
-                    // Fallback to old colon syntax for backward compatibility
                     const parts = cond.split(':').map(s => s.trim());
                     if (parts.length !== 2) {
                         console.warn(`fscss[logic] Warning: Malformed condition '${cond}' in @event '${funcName}'. Expected 'variable operator value' or 'variable:value'.`);
@@ -270,36 +264,30 @@ function processSCSS(scssCode) {
   let currentScopeVars = globalVars; // Initially global scope
   const processedLines = [];
   const lines = scssCode.split('\n');
-
-  // To manage nested scopes (simplified: just track if we're inside a block)
   let inBlock = false;
-  const blockVars = {}; // Variables declared within the current block
+  const blockVars = {}; 
 
-  // Step 1: Process lines to extract variables and build up processed CSS
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
 
-    // Check for block entry
+    
     if (line.includes('{')) {
       inBlock = true;
-      // When entering a block, any variables declared within it will go into blockVars
-      // The blockVars will be cleared when the block is exited
-      processedLines.push(line); // Add the curly brace to processed lines
-      continue; // Move to next line
+      
+      processedLines.push(line); 
+      continue; 
     }
-
-    // Check for block exit
     if (line.includes('}')) {
       inBlock = false;
-      // Clear block-level variables when exiting a block
+      
       for (const varName in blockVars) {
-        delete blockVars[varName]; // Remove block-scoped variables
+        delete blockVars[varName]; 
       }
-      processedLines.push(line); // Add the curly brace to processed lines
-      continue; // Move to next line
+      processedLines.push(line);
+      continue; 
     }
 
-    // Regex to match variable declarations (e.g., $primary-color: midnightblue;)
+    
     const varDeclarationRegex = /^\s*\$([a-zA-Z0-9_-]+)\s*:\s*([^;]+);/;
     const varMatch = line.match(varDeclarationRegex);
 
