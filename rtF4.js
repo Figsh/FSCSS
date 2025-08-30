@@ -215,6 +215,31 @@ function initlibraries(css){
   css = css.replace(/exec\(_init\sarray1to500\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/1to500.fscss)");
    return css;
 }
+function procExC(css) {
+  const regex = /exec\((_log|_error|_warn|_info),\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\)/g;
+  let jsCode = '';
+  let match;
+  while ((match = regex.exec(css)) !== null) {
+    const method = match[1].slice(1);
+    const arg = match[2] || match[3] || match[4];
+
+    if (!['_log', '_error', '_warn', '_info'].includes(match[1])) {
+      console.warn(`fscss[exec(console)]: Unsupported method: ${match[1]}`);
+      continue;
+    }
+
+    if (!arg) {
+      console.warn(`fscss[exec(console)]: Empty argument for method: ${method}`);
+      continue;
+    }
+    jsCode += `console.${method}("${arg.replace(/"/g, '\\"')}");\n`;}
+  try {
+    new Function(jsCode)();
+  } catch (e) {
+    console.error("fscss[exec(console)]: Error executing transformed code:", e);
+  }
+}
+
 function procVar(vcss){
 function processSCSS(scssCode) {
   const globalVars = {};
@@ -1030,6 +1055,7 @@ async function processStyles() {
     css = procNum(css);
     css = procExt(css);
      css = applyFscssTransformations(css);
+    css = procExC(css);
     element.innerHTML = css;
   }
 }
@@ -1040,9 +1066,7 @@ function processDrawElements() {
     element.style.webkitTextStroke = `2px ${originalColor}`;
   });
 }
-
-// Main execution with error handling
-(async () => { // Use an IIFE to await the top-level call
+(async () => { 
   try {
     await processStyles();
     await processDrawElements(); // This can run after styles are processed
