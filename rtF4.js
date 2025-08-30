@@ -97,11 +97,11 @@ function procExC(css) {
     }
   }
   
-  // Return CSS without exec(...)
   return cleanedCSS;
 }
 
-function procEv(css) {
+
+  function procEv(css) {
   const functionMap = {};
   const funcDefRegex = /@event\s+([\w-]+)\(([^)]*)\)\s*:?{/g;
   let funcMatch;
@@ -123,14 +123,13 @@ function procEv(css) {
 
     if (fullBlock.length === 0 || fullBlock[fullBlock.length - 1] !== '}') {
       console.warn(`fscss[parsing] Warning: Malformed block for @event '${funcName}'. Missing closing '}'.`);
-      // Attempt to recover by assuming the block ends here, or skip this function
       continue;
     }
 
     const fullFunc = css.slice(funcMatch.index, blockStart + fullBlock.length);
 
     const conditionBlocks = parseConditionBlocks(fullBlock);
-    const args = argsStr.split(',').map(arg => arg.trim()).filter(arg => arg !== ''); // Filter out empty strings from args
+    const args = argsStr.split(',').map(arg => arg.trim()).filter(arg => arg !== '');
 
     if (functionMap[funcName]) {
         console.warn(`fscss[definition] Warning: Duplicate @event definition for '${funcName}'. The last one will be used.`);
@@ -139,15 +138,10 @@ function procEv(css) {
 
     removalRanges.push([funcMatch.index, blockStart + fullBlock.length]);
   }
-
-  // Remove all function definitions from CSS
-  // Process ranges in reverse to avoid issues with shifting indices
   for (let i = removalRanges.length - 1; i >= 0; i--) {
     const [start, end] = removalRanges[i];
     modifiedCSS = modifiedCSS.slice(0, start) + modifiedCSS.slice(end);
   }
-
-  // Second pass: replace @event calls
   modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]*)\)/g, (match, funcName, argValuesStr) => {
     const func = functionMap[funcName];
     if (!func) {
@@ -156,15 +150,14 @@ function procEv(css) {
     }
 
     const context = {};
-    const argValues = argValuesStr.split(',').map(v => v.trim()).filter(v => v !== ''); // Filter out empty strings from arg values
+    const argValues = argValuesStr.split(',').map(v => v.trim()).filter(v => v !== '');
 
     if (argValues.length !== func.args.length) {
       console.warn(`fscss[call] Warning: Argument count mismatch for @event '${funcName}'. Expected ${func.args.length}, got ${argValues.length}.`);
-      // Continue processing, but the logic might not work as expected
     }
 
     func.args.forEach((argName, i) => {
-      if (argValues[i] !== undefined) { // Assign only if an argument value exists
+      if (argValues[i] !== undefined) {
         context[argName] = argValues[i];
       } else {
         console.warn(`fscss[call] Warning: Missing value for argument '${argName}' in @event '${funcName}' call.`);
@@ -180,54 +173,70 @@ function procEv(css) {
           if (elBlockFound) {
               console.warn(`fscss[logic] Warning: Multiple 'el' (else) blocks found in @event '${funcName}'. Only the first 'el' block will be considered.`);
           }
-          elBlockFound = true; // Mark that an 'el' block has been found
+          elBlockFound = true;
       }
 
-      if (matched && block.type !== 'el') { // If a condition already matched, and it's not an 'el' block, skip subsequent conditions
+      if (matched && block.type !== 'el') {
           continue;
       }
 
-
       if (block.type === 'el') {
-        // 'el' block should only be considered if no previous 'if' or 'el-if' matched
         if (!matched) {
-          matched = true; // Mark as matched to prevent further conditional blocks from being evaluated
+          matched = true;
         } else {
-            continue; // If a condition was already matched, skip this 'el' block
+            continue;
         }
       } else {
-        const conditions = block.condition.split(',').map(c => c.trim()).filter(c => c !== ''); // Filter out empty conditions
-        
+        const conditions = block.condition.split(',').map(c => c.trim()).filter(c => c !== '');
         if (conditions.length === 0) {
-            console.warn(`fscss[logic] Warning: Empty condition in '${block.type}' block for @event '${funcName}'. This block will always be evaluated if reached.`);
-            // An empty condition means it's effectively true if it's an 'if' or 'el-if'
+            console.warn(`fscss[logic] Warning: Empty condition in '${block.type}' block for @event '${funcName}'.`);
             matched = true;
         } else {
             matched = conditions.every(cond => {
-                const parts = cond.split(':').map(s => s.trim());
-                if (parts.length !== 2) {
-                    console.warn(`fscss[logic] Warning: Malformed condition '${cond}' in @event '${funcName}'. Expected 'variable:value'.`);
-                    return false; // Treat malformed condition as false
+                const comparisonMatch = cond.match(/^(\w+)\s*(==|!=|>=|<=|>|<)\s*([^]+)$/);
+                if (comparisonMatch) {
+                    const [, varName, operator, expected] = comparisonMatch;
+                    if (!(varName in context)) {
+                        console.warn(`fscss[logic] Warning: Condition variable '${varName}' not provided in @event '${funcName}' context. Treating as false.`);
+                        return false;
+                    }
+                    const actual = context[varName];
+                    
+                    const numActual = isNaN(actual) ? actual : Number(actual);
+                    const numExpected = isNaN(expected) ? expected : Number(expected);
+                    switch (operator) {
+                        case '==': return numActual == numExpected;
+                        case '!=': return numActual != numExpected;
+                        case '>': return numActual > numExpected;
+                        case '<': return numActual < numExpected;
+                        case '>=': return numActual >= numExpected;
+                        case '<=': return numActual <= numExpected;
+                        default: return false;
+                    }
+                } else {
+                    const parts = cond.split(':').map(s => s.trim());
+                    if (parts.length !== 2) {
+                        console.warn(`fscss[logic] Warning: Malformed condition '${cond}' in @event '${funcName}'. Expected 'variable operator value' or 'variable:value'.`);
+                        return false;
+                    }
+                    const [varName, expected] = parts;
+                    if (!(varName in context)) {
+                        console.warn(`fscss[logic] Warning: Condition variable '${varName}' not provided in @event '${funcName}' context. Treating as false.`);
+                        return false;
+                    }
+                    return context[varName] === expected;
                 }
-                const [varName, expected] = parts;
-                if (!(varName in context)) {
-                    console.warn(`fscss[logic] Warning: Condition variable '${varName}' not provided in @event '${funcName}' context. Treating as false.`);
-                    return false;
-                }
-                return context[varName] === expected;
             });
         }
       }
 
       if (matched) {
-        const assignMatch = block.block.match(/(\w+)\s*:\s*([^;]+);?/); // Made semicolon optional
+        const assignMatch = block.block.match(/(\w+)\s*:\s*([^;]+);?/);
         if (assignMatch) {
           result = assignMatch[2].trim();
         } else {
           console.warn(`fscss[logic] Warning: No valid CSS property assignment found in matched block for @event '${funcName}'. Block content: '${block.block}'.`);
         }
-        // If an 'if' or 'el-if' block matched, we should stop checking further 'el-if' or 'el' blocks.
-        // If an 'el' block matched, we also stop.
         break;
       }
     }
@@ -243,7 +252,6 @@ function procEv(css) {
 
   return modifiedCSS.trim();
 }
-
 function initlibraries(css){
   css = css.replace(/exec\(\s*_init\sisjs\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/isjs.fscss)");
   css = css.replace(/exec\(\s*_init\sthemes\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/trshapes.fthemes.fscss)")
@@ -256,36 +264,30 @@ function processSCSS(scssCode) {
   let currentScopeVars = globalVars; // Initially global scope
   const processedLines = [];
   const lines = scssCode.split('\n');
-
-  // To manage nested scopes (simplified: just track if we're inside a block)
   let inBlock = false;
-  const blockVars = {}; // Variables declared within the current block
+  const blockVars = {}; 
 
-  // Step 1: Process lines to extract variables and build up processed CSS
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
 
-    // Check for block entry
+    
     if (line.includes('{')) {
       inBlock = true;
-      // When entering a block, any variables declared within it will go into blockVars
-      // The blockVars will be cleared when the block is exited
-      processedLines.push(line); // Add the curly brace to processed lines
-      continue; // Move to next line
+      
+      processedLines.push(line); 
+      continue; 
     }
-
-    // Check for block exit
     if (line.includes('}')) {
       inBlock = false;
-      // Clear block-level variables when exiting a block
+      
       for (const varName in blockVars) {
-        delete blockVars[varName]; // Remove block-scoped variables
+        delete blockVars[varName]; 
       }
-      processedLines.push(line); // Add the curly brace to processed lines
-      continue; // Move to next line
+      processedLines.push(line);
+      continue; 
     }
 
-    // Regex to match variable declarations (e.g., $primary-color: midnightblue;)
+    
     const varDeclarationRegex = /^\s*\$([a-zA-Z0-9_-]+)\s*:\s*([^;]+);/;
     const varMatch = line.match(varDeclarationRegex);
 
@@ -1010,8 +1012,6 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
       }
     })
   );
-
-  // Now, fetchedContents holds the actual processed CSS strings
   let lastIndex = 0;
   let result = '';
   matches.forEach((match, i) => {
@@ -1025,8 +1025,6 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
   console.log(`fscss[@import] Info: Finished processing imports at depth ${depth}.`);
   return result;
 }
-
-// Fixed version: Proper async handling
 async function procImp(css) {
   try {
     const processedCSS = await processImports(css);
@@ -1044,9 +1042,7 @@ async function processStyles() {
   if (!styleElements.length) {
     console.warn('No <style> elements found.');
     return;
-  }
-
-  for (const element of styleElements) {
+  }for (const element of styleElements) {
     let css = element.textContent;
     if(!css.includes("exec.obj.block(all)")){
     if(!css.includes("exec.obj.block(init lab)"))css = initlibraries(css);
@@ -1067,7 +1063,7 @@ async function processStyles() {
     } 
     css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "");
     element.innerHTML = css;
-     
+    
   }
 }
 function processDrawElements() {
