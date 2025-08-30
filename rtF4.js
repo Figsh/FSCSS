@@ -1065,7 +1065,7 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(t group)"))css = applyFscssTransformations(css);
     if(!css.includes("exec.obj.block(debug)"))css = procExC(css);
     } 
-    css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "")
+    css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "");
     element.innerHTML = css;
      
   }
