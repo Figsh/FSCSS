@@ -1038,7 +1038,6 @@ async function procImp(css) {
   }
 }
 
-// Update processStyles to await async operations
 async function processStyles() {
   const styleElements = document.querySelectorAll('style');
 
@@ -1047,26 +1046,28 @@ async function processStyles() {
     return;
   }
 
-  for (const element of styleElements) { // Use for...of to await inside loop
+  for (const element of styleElements) {
     let css = element.textContent;
-    css = initlibraries(css);
-    css = await procImp(css); // Await procImp
-    css = replaceRe(css);
-    css = procExt(css);
-    css = procVar(css);
-    
-    css = procFun(css);
-    
-    css = procArr(css);
-    css = procEv(css);
-    css = procRan(css);
-    css = transformCssValues(css);
-    css = replaceRe(css);
-    css = procNum(css);
-    css = procExt(css);
-     css = applyFscssTransformations(css);
-    css = procExC(css);
+    if(!css.includes("exec.obj.block(all)")){
+    if(!css.includes("exec.obj.block(init lab)"))css = initlibraries(css);
+    if(!css.includes("exec.obj.block(f import)"))css = await procImp(css); 
+    if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
+    if(!css.includes("exec.obj.block(ext:before)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
+    if(!css.includes("exec.obj.block(f var)"))css = procVar(css);
+    if(!css.includes("exec.obj.block(fun)"))css = procFun(css);
+    if(!css.includes("exec.obj.block(arr)"))css = procArr(css);
+    if(!css.includes("exec.obj.block(event)"))css = procEv(css);
+    if(!css.includes("exec.obj.block(random)"))css = procRan(css);
+    if(!css.includes("exec.obj.block(copy)"))css = transformCssValues(css);
+    if(!css.includes("exec.obj.block(store:after)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
+    if(!css.includes("exec.obj.block(num)"))css = procNum(css);
+    if(!css.includes("exec.obj.block(ext:after)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
+    if(!css.includes("exec.obj.block(t group)"))css = applyFscssTransformations(css);
+    if(!css.includes("exec.obj.block(debug)"))css = procExC(css);
+    } 
+    css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "")
     element.innerHTML = css;
+     
   }
 }
 function processDrawElements() {
