@@ -35,10 +35,10 @@ const processedCSS = css.replace(regex, (match, expression) => {
 
 return (processedCSS);
   }
-const arraysExfscss = {}; // Renamed the global variable
+const arraysExfscss = {}; 
 const orderedxFscssRandom = {};
 
-const exfMAX_DEPTH = 10; // Prevent infinite recursion
+const exfMAX_DEPTH = 10; 
 function extractBlock(css, startIndex) {
   let depth = 0;
   let i = startIndex;
@@ -53,7 +53,7 @@ function extractBlock(css, startIndex) {
 
 function parseConditionBlocks(block) {
   const blocks = [];
-  // Adjusted regex to correctly capture the block content within curly braces
+  
   const conditionRegex = /(if|el-if|el)\s*([^{}]*?)\s*\{([\s\S]*?)\}/g;
   let match;
   while ((match = conditionRegex.exec(block)) !== null) {
@@ -72,8 +72,6 @@ function procEv(css) {
   let funcMatch;
   let modifiedCSS = css;
   const removalRanges = [];
-
-  // First pass: extract and mark function definitions
   while ((funcMatch = funcDefRegex.exec(css)) !== null) {
     const funcName = funcMatch[1];
     const argsStr = funcMatch[2];
@@ -88,7 +86,6 @@ function procEv(css) {
 
     if (fullBlock.length === 0 || fullBlock[fullBlock.length - 1] !== '}') {
       console.warn(`fscss[parsing] Warning: Malformed block for @event '${funcName}'. Missing closing '}'.`);
-      // Attempt to recover by assuming the block ends here, or skip this function
       continue;
     }
 
@@ -104,15 +101,10 @@ function procEv(css) {
 
     removalRanges.push([funcMatch.index, blockStart + fullBlock.length]);
   }
-
-  // Remove all function definitions from CSS
-  // Process ranges in reverse to avoid issues with shifting indices
   for (let i = removalRanges.length - 1; i >= 0; i--) {
     const [start, end] = removalRanges[i];
     modifiedCSS = modifiedCSS.slice(0, start) + modifiedCSS.slice(end);
   }
-
-  // Second pass: replace @event calls
   modifiedCSS = modifiedCSS.replace(/@event\.([\w-]+)\(([^)]*)\)/g, (match, funcName, argValuesStr) => {
     const func = functionMap[funcName];
     if (!func) {
@@ -125,11 +117,11 @@ function procEv(css) {
 
     if (argValues.length !== func.args.length) {
       console.warn(`fscss[call] Warning: Argument count mismatch for @event '${funcName}'. Expected ${func.args.length}, got ${argValues.length}.`);
-      // Continue processing, but the logic might not work as expected
+      
     }
 
     func.args.forEach((argName, i) => {
-      if (argValues[i] !== undefined) { // Assign only if an argument value exists
+      if (argValues[i] !== undefined) {
         context[argName] = argValues[i];
       } else {
         console.warn(`fscss[call] Warning: Missing value for argument '${argName}' in @event '${funcName}' call.`);
@@ -145,10 +137,10 @@ function procEv(css) {
           if (elBlockFound) {
               console.warn(`fscss[logic] Warning: Multiple 'el' (else) blocks found in @event '${funcName}'. Only the first 'el' block will be considered.`);
           }
-          elBlockFound = true; // Mark that an 'el' block has been found
+          elBlockFound = true; 
       }
 
-      if (matched && block.type !== 'el') { // If a condition already matched, and it's not an 'el' block, skip subsequent conditions
+      if (matched && block.type !== 'el') { 
           continue;
       }
 
