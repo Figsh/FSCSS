@@ -69,25 +69,36 @@ function procExC(css) {
   const regex = /exec\((_log|_error|_warn|_info),\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\)/g;
   let jsCode = '';
   let match;
-  while ((match = regex.exec(css)) !== null) {
-    const method = match[1].slice(1);
-    const arg = match[2] || match[3] || match[4];
-
-    if (!['_log', '_error', '_warn', '_info'].includes(match[1])) {
-      console.warn(`fscss[exec(console)]: Unsupported method: ${match[1]}`);
-      continue;
+  
+  // Replace exec(...) with nothing (remove from CSS) while collecting code
+  const cleanedCSS = css.replace(regex, (full, method, dQ, sQ, raw) => {
+    const arg = dQ || sQ || raw;
+    
+    if (!['_log', '_error', '_warn', '_info'].includes(method)) {
+      console.warn(`fscss[exec(console)]: Unsupported method: ${method}`);
+      return ''; // strip it from CSS
     }
-
+    
     if (!arg) {
       console.warn(`fscss[exec(console)]: Empty argument for method: ${method}`);
-      continue;
+      return ''; // strip it from CSS
     }
-    jsCode += `console.${method}("${arg.replace(/"/g, '\\"')}");\n`;}
-  try {
-    new Function(jsCode)();
-  } catch (e) {
-    console.error("fscss[exec(console)]: Error executing transformed code:", e);
+    
+    jsCode += `console.${method.slice(1)}("${arg.replace(/"/g, '\\"')}");\n`;
+    return ''; // ensure CSS isn’t broken
+  });
+  
+  // Run console code safely
+  if (jsCode) {
+    try {
+      new Function(jsCode)();
+    } catch (e) {
+      console.error("fscss[exec(console)]: Error executing transformed code:", e);
+    }
   }
+  
+  // Return CSS without exec(...)
+  return cleanedCSS;
 }
 
 function procEv(css) {
@@ -1054,6 +1065,7 @@ async function processStyles() {
     css = procNum(css);
     css = procExt(css);
      css = applyFscssTransformations(css);
+    css = procExC(css);
     element.innerHTML = css;
   }
 }
