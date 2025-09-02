@@ -8,14 +8,14 @@
  * 
  * Resources:
  *   - fscss-ttr on dev.to
- *   - Figsh on youtube.com, codepen.io, stackoverflow.com
+ *   - Figsh on ekumedia.netlify.app, codepen.io, stackoverflow.com
  *   - npm package: fscss (npm install fscss)
  * 
  * Version: source v6, package v1+
- * Last Edited: Aug 2025
+ * Last Edited: 11:29pm Tue Jun 17 2025
  * 
  * Note: Use official npm package/CDN instead of copying this directly.
- *       meet: Facebook (FSCSS), Dev community (FSCSS) for tutorial.
+ *       Contact: Facebook (FSCSS) for support.
  */
 function procNum(css){
 const regex = /num\((.*?)\)/g;
@@ -258,90 +258,77 @@ function initlibraries(css){
   css = css.replace(/exec\(_init\sarray1to500\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/1to500.fscss)");
    return css;
 }
-function procVar(vcss){
-function processSCSS(scssCode) {
-  const globalVars = {};
-  let currentScopeVars = globalVars; // Initially global scope
-  const processedLines = [];
-  const lines = scssCode.split('\n');
-  let inBlock = false;
-  const blockVars = {}; 
+function procVar(vcss) {
+  function processSCSS(scssCode) {
+    const globalVars = {};
+    const processedLines = [];
+    const lines = scssCode.split('\n');
 
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
+    let inBlock = false;
+    const blockVars = {};
 
-    
-    if (line.includes('{')) {
-      inBlock = true;
-      
-      processedLines.push(line); 
-      continue; 
-    }
-    if (line.includes('}')) {
-      inBlock = false;
-      
-      for (const varName in blockVars) {
-        delete blockVars[varName]; 
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i].trim();
+
+      if (line.includes('{')) {
+        inBlock = true;
+        processedLines.push(line);
+        continue;
       }
+
+      if (line.includes('}')) {
+        inBlock = false;
+        for (const varName in blockVars) {
+          delete blockVars[varName];
+        }
+        processedLines.push(line);
+        continue;
+      }
+
+      const varDeclarationRegex = /^\s*\$([a-zA-Z0-9_-]+)\s*:\s*([^;]+);/;
+      const varMatch = line.match(varDeclarationRegex);
+
+      if (varMatch) {
+        const [, varName, varValue] = varMatch;
+        if (inBlock) {
+          blockVars[varName] = varValue.trim();
+          // Do not include block-scoped declarations in the final CSS
+        } else {
+          globalVars[varName] = varValue.trim();
+          // Include global variable declarations in the final CSS
+          processedLines.push(line);
+        }
+        continue;
+      }
+
+      const varUsageRegex = /\$\/?([a-zA-Z0-9_-]+)(!)?/g;
+
+      line = line.replace(varUsageRegex, (match, varName) => {
+        if (blockVars[varName] !== undefined) {
+          return blockVars[varName];
+        } else if (globalVars[varName] !== undefined) {
+          return globalVars[varName];
+        }
+        return match;
+      });
+
       processedLines.push(line);
-      continue; 
     }
 
-    
-    const varDeclarationRegex = /^\s*\$([a-zA-Z0-9_-]+)\s*:\s*([^;]+);/;
-    const varMatch = line.match(varDeclarationRegex);
-
-    if (varMatch) {
-      const [, varName, varValue] = varMatch;
-      if (inBlock) {
-        blockVars[varName] = varValue.trim();
-      } else {
-        globalVars[varName] = varValue.trim();
-      }
-      // This line is a declaration, so don't include it in the final CSS output
-      continue; // Move to next line
+    function getVariable(varName) {
+      return globalVars[varName] || null;
     }
+    const finalCss = processedLines.join('\n');
 
-    // Regex to match variable usage (e.g., $primary-color or $primary-color!)
-    const varUsageRegex = /\$\/?([a-zA-Z0-9_-]+)(!)?/g;
-
-    // Replace variable references in the current line
-    line = line.replace(varUsageRegex, (match, varName) => {
-      // Prioritize block-scoped variables, then global variables
-      if (blockVars[varName] !== undefined) {
-        return blockVars[varName];
-      } else if (globalVars[varName] !== undefined) {
-        return globalVars[varName];
-      }
-      return match; // If variable not found, return original match (e.g., for non-existent variables)
-    });
-
-    processedLines.push(line);
+    return {
+      css: finalCss,
+      getVariable
+    };
   }
 
-  // Step 2: Function to access variable values (for external access)
-  function getVariable(varName) {
-    // This function will only return global variables for external access,
-    // as local variables are transient during processing.
-    // If you need to expose local variables, you'd need a more complex
-    // data structure to store them along with their scope.
-    return globalVars[varName] || null;
-  }
-
-  // Join the processed lines back into a single CSS string
-  const finalCss = processedLines.join('\n');
-
-  return {
-    css: finalCss,
-    getVariable
-  };
+  const result = processSCSS(vcss);
+  return result.css;
 }
-
-
-const result = processSCSS(vcss);
-// Output the processed CSS
- return result.css
-} 
 
 function procExt(css) {
   let extractedVariables = {};
@@ -968,71 +955,68 @@ function applyFscssTransformations(css) {
 }
 
 
-// Main execution with error handling
-async function processImports(cssText, depth = 0, baseURL = window.location.href) { // Mark as async
+const VALID_EXTENSIONS = ['.fscss', '.css', '.txt', '.scss', '.less', '.xfscss'];
+
+async function processImports(cssText, depth = 0, baseURL = window.location.href) {
   if (depth > exfMAX_DEPTH) {
-    console.warn(`fscss[@import] Warning: Maximum import depth (${exfMAX_DEPTH}) exceeded for base URL "${baseURL}". Skipping further imports.`);
+    console.warn('fscss[@import]\n Maximum import depth exceeded. Skipping further imports.');
     return cssText;
   }
 
   const importRegex = /@import\s*\(\s*exec\s*\(\s*((?:'[^']*'|"[^"]*"|[^'")]\S*)\s*)\)\s*\)/g;
   const matches = Array.from(cssText.matchAll(importRegex));
 
-  if (matches.length === 0) {
-    
-    return cssText;
-  }
+  if (matches.length === 0) return cssText;
 
-  
-
-  // Await the resolution of all import promises
   const fetchedContents = await Promise.all(
     matches.map(async (match) => {
       const [fullMatch, urlSpec] = match;
-      let cleanUrl = urlSpec.replace(/^['"](.*)['"]$/, '$1').trim();
-      let absoluteUrl;
-
       try {
-        absoluteUrl = new URL(cleanUrl, baseURL).href;
-        
+        const cleanUrl = urlSpec.replace(/^['"](.*)['"]$/, '$1').trim();
+        const absoluteUrl = new URL(cleanUrl, baseURL).href;
 
-        const response = await fetch(absoluteUrl); // Await fetch
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} for ${absoluteUrl}`);
+        // --- New code for extension validation ---
+        const urlPath = new URL(absoluteUrl).pathname;
+        const extension = urlPath.slice(urlPath.lastIndexOf('.')).toLowerCase();
+
+        if (!VALID_EXTENSIONS.includes(extension)) {
+          console.warn(`fscss[@import] \n Invalid import URL extension "${extension}" for "${absoluteUrl}". Only ${VALID_EXTENSIONS.join(', ')} are allowed.`);
+          return `/* Invalid extension for "${absoluteUrl}" */`;
         }
+        // --- End of new code ---
 
-        const importedText = await response.text(); // Await text()
-        
+        const response = await fetch(absoluteUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status} for ${absoluteUrl}`);
 
-        // Recursive call should also be awaited for its promise to resolve
-        return await processImports(importedText, depth + 1, absoluteUrl);
+        const importedText = await response.text();
+        return processImports(importedText, depth + 1, absoluteUrl);
       } catch (error) {
-        console.error(`fscss[@import] Error: Failed to import "${cleanUrl}" from "${baseURL}":`, error);
-        return `/* fscss[@import] Error importing "${cleanUrl}": ${error.message} */`;
+        console.warn(`fscss[@import]\n Failed to import "${urlSpec}" from "${baseURL}":`, error);
+        return `/* Error importing "${urlSpec}": ${error.message} */`;
       }
     })
   );
+
   let lastIndex = 0;
   let result = '';
   matches.forEach((match, i) => {
     result += cssText.slice(lastIndex, match.index);
-    result += fetchedContents[i]; // Use the resolved content
+    result += fetchedContents[i];
     lastIndex = match.index + match[0].length;
-    
   });
   result += cssText.slice(lastIndex);
 
-  console.log(`fscss[@import] Info: Finished processing imports at depth ${depth}.`);
   return result;
 }
+
 async function procImp(css) {
   try {
     const processedCSS = await processImports(css);
     return processedCSS;
   } catch (error) {
-    console.error('Processing failed:', error);
+    console.warn('fscss[]\n Processing failed:', error);
     console.warn(`fscss[@import] Warning: can't resolve imports`);
-    return css; // Return original CSS as fallback
+    return css; 
   }
 }
 
@@ -1040,7 +1024,7 @@ async function processStyles() {
   const styleElements = document.querySelectorAll('style');
 
   if (!styleElements.length) {
-    console.warn('No <style> elements found.');
+    console.warn('fscss[Obj]\n No <style> elements found.');
     return;
   }for (const element of styleElements) {
     let css = element.textContent;
