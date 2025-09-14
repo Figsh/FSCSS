@@ -231,15 +231,20 @@ function procExC(css) {
       }
 
       if (matched) {
-        const assignMatch = block.block.match(/(\w+)\s*:\s*([^;]+);?/);
-        if (assignMatch) {
+        const assignMatch = block.block.match(/(\w+)\s*(?:\:\s*([^;]*);?|\|([^\|]+)\|?)/);
+        if (assignMatch && assignMatch[2]) {
           result = assignMatch[2].trim();
-        } else {
+        } 
+        else if (assignMatch && assignMatch[3]) {
+          result = assignMatch[3].trim();
+        }
+        else {
           console.warn(`fscss[logic] Warning: No valid CSS property assignment found in matched block for @event '${funcName}'. Block content: '${block.block}'.`);
         }
         break;
       }
     }
+    
     
     if (!result && func.conditionBlocks.length > 0 && !matched) {
         console.warn(`fscss[call] Warning: No condition matched for @event '${funcName}' with provided arguments. Returning original call string.`);
