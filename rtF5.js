@@ -1,3 +1,4 @@
+
 /**
  * FSCSS Processing Script
  * 
@@ -942,10 +943,7 @@ function applyFscssTransformations(css) {
     .replace(/%2\((([^\,\[\]]*)\,)?(([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi, '$2$5$4$5')
     .replace(/%1\((([^\,\]\[]*))?\s*\[([^\]\[]*)\]\)/gi, '$2$3');
   css = procP(css);
-    css=css.replace(/@import\(\s*\exec\((.*)(.{5})\)\s*\)/gi, '@import url("$1css")')
-    
-    // Process animation shorthands
-   .replace(/\$\(\s*@keyframes\s*(\S+)\)/gi, '$1{animation-name:$1;}@keyframes $1')
+    css = css.replace(/\$\(\s*@keyframes\s*(\S+)\)/gi, '$1{animation-name:$1;}@keyframes $1')
     .replace(/\$\(\s*(\@[\w\-\*]*)\s*([^\{\}\,&]*)(\s*,\s*[^\{\}&]*)?&?(\[([^\{\}]*)\])?\s*\)/gi, '$2$3{animation:$2 $5;}$1 $2')
     
     // Process property references
@@ -958,7 +956,48 @@ function applyFscssTransformations(css) {
     .replace(/\$\(([^\:^\)]*)\)/gi, '[$1]');
   return css;
 }
+async function impSel(text) {
+  const validImpExt = [".fscss", ".css", ".txt", ".scss", ".less", "xfscss"]
+  const regex = /@import\(exec\(([^)]+)\)\s*\.\s*(?:pick|find)\(([^)]+)\)\)/g;
+  const matches = [...text.matchAll(regex)];
+  
+  let result = text;
+  
+  for (const match of matches) {
+    const [fullMatch, urlSrc, part] = match;
+    try {
+      const impUrl = urlSrc.replace(/["']/g, "");
+      const impExt = impUrl.slice(impUrl.lastIndexOf(".")).toLowerCase();
+      if (impUrl.trim().startsWith("_init") && impUrl.includes(" ")) {
+        console.warn(`fscss[@import] library not found for: ${impUrl}`);
+        return;
+      }
+      
+      if (!validImpExt.includes(impExt)) {
+        console.warn(`fscss[@import] invalid extension for: ${impUrl}`);
+        return;
+      }
+      
+      const response = await fetch(impUrl);
+      if (!response.ok) throw new Error(`fscss[@import] HTTP ${response.status} for ${urlSrc}`);
+      const resText = await response.text();
+      const extracted = extractOnlyBlock(resText, part.trim());
+      result = result.replace(fullMatch, extracted);
+    } catch (err) {
+      console.error(`fscss[@import]  Failed: ${urlSrc} `, err);
+      result = result.replace(fullMatch, `/* Failed import: ${urlSrc} */`);
+      
+    }
+  }
+  
+  return result;
+}
 
+function extractOnlyBlock(cssText, blockName) {
+  const regex = new RegExp(`${blockName}\\s*{[^}]*}`, "g");
+  const match = cssText.match(regex);
+  return match ? match.join("\n") : console.warn(`fscss[@import pick] No block matches: ${blockName} `);
+}
 
 const VALID_EXTENSIONS = ['.fscss', '.css', '.txt', '.scss', '.less', '.xfscss'];
 
@@ -983,7 +1022,12 @@ async function processImports(cssText, depth = 0, baseURL = window.location.href
         // --- New code for extension validation ---
         const urlPath = new URL(absoluteUrl).pathname;
         const extension = urlPath.slice(urlPath.lastIndexOf('.')).toLowerCase();
-
+        
+ if (absoluteUrl.trim().startsWith("_init") && absoluteUrl.includes(" ")){
+        console.warn(`fscss[@import] library not found for: ${absoluteUrl}`);
+        return;
+      }
+      
         if (!VALID_EXTENSIONS.includes(extension)) {
           console.warn(`fscss[@import] \n Invalid import URL extension "${extension}" for "${absoluteUrl}". Only ${VALID_EXTENSIONS.join(', ')} are allowed.`);
           return `/* Invalid extension for "${absoluteUrl}" */`;
@@ -1035,7 +1079,9 @@ async function processStyles() {
     let css = element.textContent;
     if(!css.includes("exec.obj.block(all)")){
     if(!css.includes("exec.obj.block(init lab)"))css = initlibraries(css);
+    if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import pick)"))css = await impSel(css);
     if(!css.includes("exec.obj.block(f import)"))css = await procImp(css); 
+    
     if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
     if(!css.includes("exec.obj.block(ext:before)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
     if(!css.includes("exec.obj.block(f var)"))css = procVar(css);
