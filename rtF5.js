@@ -1,4 +1,3 @@
-
 /**
  * FSCSS Processing Script
  * 
@@ -18,6 +17,26 @@
  * Note: Use official npm package/CDN instead of copying this directly.
  *       Contact: Facebook (FSCSS) for support.
  */
+ function procCntInit(ntc,stc){
+  const nu = Array(ntc).fill().map((_, i)=>(i+1)*stc);
+  return `${nu}`;
+} 
+  function procCnt(text){
+    const reg=/count\((\d+)(?:,(\d+)?)?\)/g;
+    text = text.replace(reg, (March, num, step)=>{
+      if(step===null)step=1;
+      return procCntInit(parseInt(num), parseInt(step?step:1));
+    })
+    return text;
+  }
+  function procChe(text) {
+  const reg = /length\((?:([^\)]+)|"([^"]*)"|'([^']*)')\)/g;
+  text = text.replace(reg, (match, txt, txt2, txt3) => {
+    const resTxt = txt || txt2 || txt3;
+    return resTxt.length;
+  })
+  return text;
+}
 function procNum(css){
 const regex = /num\((.*?)\)/g;
 function evaluateExpression(expression) {
@@ -1086,6 +1105,8 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(ext:before)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
     if(!css.includes("exec.obj.block(f var)"))css = procVar(css);
     if(!css.includes("exec.obj.block(fun)"))css = procFun(css);
+    if(!css.includes("exec.obj.block(length)"))css = procChe(css);
+    if(!css.includes("exec.obj.block(count)"))css = procCnt(css);
     if(!css.includes("exec.obj.block(arr)"))css = procArr(css);
     if(!css.includes("exec.obj.block(event)"))css = procEv(css);
     if(!css.includes("exec.obj.block(random)"))css = procRan(css);
@@ -1094,6 +1115,8 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(num)"))css = procNum(css);
     if(!css.includes("exec.obj.block(ext:after)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
     if(!css.includes("exec.obj.block(t group)"))css = applyFscssTransformations(css);
+    if(!css.includes("exec.obj.block(length)"))css = procChe(css);
+    if(!css.includes("exec.obj.block(count)"))css = procCnt(css);
     if(!css.includes("exec.obj.block(debug)"))css = procExC(css);
     } 
     css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "");
