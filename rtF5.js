@@ -22,7 +22,7 @@
   return `${nu}`;
 } 
   function procCnt(text){
-    const reg=/count\((\d+)(?:,(\d+)?)?\)/g;
+    const reg=/count\(([\d\.]+)(?:\s*,\s*([\d\.]+)?)?\)/g;
     text = text.replace(reg, (March, num, step)=>{
       if(step===null)step=1;
       return procCntInit(parseInt(num), parseInt(step?step:1));
@@ -30,7 +30,7 @@
     return text;
   }
   function procChe(text) {
-  const reg = /length\((?:([^\)]+)|"([^"]*)"|'([^']*)')\)/g;
+  const reg = /length\((?:([^\)]+)|\s*"([^"]*)"\s*|\s*'([^']*)'\s*)\)/g;
   text = text.replace(reg, (match, txt, txt2, txt3) => {
     const resTxt = txt || txt2 || txt3;
     return resTxt.length;
