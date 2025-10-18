@@ -1,3 +1,4 @@
+
 /**
  * FSCSS Processing Script
  * 
@@ -22,7 +23,7 @@
   return `${nu}`;
 } 
   function procCnt(text){
-    const reg=/count\(([\d\.]+)(?:\s*,\s*([\d\.]+)?)?\)/g;
+    const reg=/count\(\s*([\d\.]+)\s*(?:,\s*([\d\.]+)?)?\)/g;
     text = text.replace(reg, (March, num, step)=>{
       if(step===null)step=1;
       return procCntInit(parseInt(num), parseInt(step?step:1));
