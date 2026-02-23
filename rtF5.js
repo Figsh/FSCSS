@@ -1,4 +1,3 @@
-
 /**
  * FSCSS Processing Script
  * 
@@ -9,14 +8,14 @@
  * 
  * Resources:
  *   - fscss-ttr on dev.to
- *   - Figsh on devtem.org, codepen.io, stackoverflow.com
- *   - npm package: fscss (npm install fscss)
+ *   - Figsh on figsh.devtem.org, codepen.io, stackoverflow.com
+ *   - npm package: fscss (npm install -g fscss)
  * 
- * Version: source v6, package v1+
- * Last Edited: 11:29pm Tue Jun 17 2025
+ * Version: source v11, package v1+
+ * Last Edited: Wed 18 2026
  * 
  * Note: Use official npm package/CDN instead of copying this directly.
- *       Contact: (FSCSS) for support.
+ *       Contact: (figsh.devtem.org) for support.
  */
  function procCntInit(ntc,stc){
   const nu = Array(ntc).fill().map((_, i)=>(i+1)*stc);
@@ -936,8 +935,43 @@ function replaceRe(css) {
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
 }
-
-
+/* Variable fallback chain */
+function vfc(fscss){
+  fscss = fscss.replace(
+  /([\w-]+:\s*)(\$\/?[\w-]+!?)(\s*\|\|\s*([^\n\};]+))?/g,
+  (match, pr, variable, fallbackPart, fallback) => {
+    
+    // Invalid variable format
+    if (!/^\$\/[\w-]+!?$/.test(variable)) {
+      console.warn(`fscss[VFC]: Invalid variable escape syntax -> ${variable} at ${match}`);
+      return match;
+    }
+    
+    //  Required variable but has fallback
+    if (variable.endsWith("!") && fallback) {
+      console.warn(`fscss[VFC]: Required variable "${variable}" should not have fallback (${fallback})`);
+    }
+    
+    //  Fallback starts with ||
+    if (fallbackPart && !fallback?.trim()) {
+      console.warn(`fscss[VFC]: Empty fallback in -> ${match}`);
+      return match;
+    }
+    
+    //  Invalid fallback variable syntax
+    if (fallback?.includes("$/") && !/^\$\/[\w-]+!?$/.test(fallback.trim())) {
+      console.warn(`fscss[VFC]: Invalid fallback variable syntax -> ${fallback}`);
+    }
+    
+    // Compile logic
+    if (fallback) {
+      return `${pr}${fallback.trim()};${pr}${variable}`;
+    }
+    
+    return `${pr}${variable}`;
+  })
+  return fscss;
+}
 // Applies all FSCSS transformations to CSS content
 function applyFscssTransformations(css) {
     // Handle mx/mxs padding shorthands
@@ -974,6 +1008,7 @@ function applyFscssTransformations(css) {
     .replace(/g\(([^"'\s]*)\,\s*(("([^"]*)"|'([^']*)')\,\s*)?("([^"]*)"|'([^']*)')\s*\)/gi, '$1 $4$5$1 $7$8')
     .replace(/\$\(([^\:]*):\s*([^\)\:]*)\)/gi, '[$1=\'$2\']')
     .replace(/\$\(([^\:^\)]*)\)/gi, '[$1]');
+    /* || */
   return css;
 }
 async function impSel(text) {
@@ -1101,7 +1136,10 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(init lab)"))css = initlibraries(css);
     if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import pick)"))css = await impSel(css);
     if(!css.includes("exec.obj.block(f import)"))css = await procImp(css); 
-    
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css = initlibraries(css);
+    if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
+if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
+    if(!css.includes("exec.obj.block(vfc)")) css = vfc(css);
     if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
     if(!css.includes("exec.obj.block(ext:before)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
     if(!css.includes("exec.obj.block(f var)"))css = procVar(css);
