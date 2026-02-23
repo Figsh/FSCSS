@@ -1137,7 +1137,7 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(f import)"))css = await procImp(css); 
     if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css = initlibraries(css);
     if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
-if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
+    if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(vfc)")) css = vfc(css);
     if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
     if(!css.includes("exec.obj.block(ext:before)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
