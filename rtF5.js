@@ -3,7 +3,6 @@
  * 
  * Credit: 
  *   - EKUYIK SAM as Figsh (Publisher)
- *   - David-Hux (Writer)
  *   - Current User (Implementer)
  * 
  * Resources:
