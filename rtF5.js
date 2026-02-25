@@ -3,6 +3,7 @@
  * 
  * Credit: 
  *   - EKUYIK SAM as Figsh (Publisher)
+ *   - David-Hux (Writer)
  *   - Current User (Implementer)
  * 
  * Resources:
@@ -40,12 +41,14 @@ function procNum(css){
 const regex = /num\((.*?)\)/g;
 function evaluateExpression(expression) {
   try {
-    return eval(expression);
+    // function 
+    return new Function(`return ${expression}`)();
   } catch (e) {
     console.error('Invalid expression:', expression);
     return expression;
   }
 }
+
 
 const processedCSS = css.replace(regex, (match, expression) => {
   
@@ -54,6 +57,7 @@ const processedCSS = css.replace(regex, (match, expression) => {
 
 return (processedCSS);
   }
+  
 const arraysExfscss = {}; // Renamed the global variable
 const orderedxFscssRandom = {};
 
@@ -1137,7 +1141,7 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(f import)"))css = await procImp(css); 
     if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css = initlibraries(css);
     if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
-    if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
+if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(vfc)")) css = vfc(css);
     if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
     if(!css.includes("exec.obj.block(ext:before)")||!css.includes("exec.obj.block(ext)"))css = procExt(css);
@@ -1178,3 +1182,7 @@ function processDrawElements() {
     console.error('Error processing styles or draw elements:', error);
   }
 })();
+
+
+
+
