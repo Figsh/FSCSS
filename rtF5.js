@@ -11,8 +11,8 @@
  *   - Figsh on figsh.devtem.org, codepen.io, stackoverflow.com
  *   - npm package: fscss (npm install -g fscss)
  * 
- * Version: source v11, package v1+
- * Last Edited: Wed 18 2026
+ * Version: source v13, package v1+
+ * Last Edited: Feb 26th, 2026
  * 
  * Note: Use official npm package/CDN instead of copying this directly.
  *       Contact: (figsh.devtem.org) for support.
