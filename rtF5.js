@@ -17,6 +17,7 @@
  * Note: Use official npm package/CDN instead of copying this directly.
  * visit: (fscss.devtem.org) for support.
  */
+ 
  function procCntInit(ntc,stc){
   const nu = Array(ntc).fill().map((_, i)=>(i+1)*stc);
   return `${nu}`;
@@ -1358,6 +1359,7 @@ if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(fun)"))css = procFun(css);
     if(!css.includes("exec.obj.block(length)"))css = procChe(css);
     if(!css.includes("exec.obj.block(count)"))css = procCnt(css);
+    if(!css.includes("exec.obj.block(define)"))css = procDef(css);
     if(!css.includes("exec.obj.block(arr)"))css = procArr(css);
     if(!css.includes("exec.obj.block(event)"))css = procEv(css);
     if(!css.includes("exec.obj.block(random)"))css = procRan(css);
@@ -1368,7 +1370,6 @@ if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(t group)"))css = applyFscssTransformations(css);
     if(!css.includes("exec.obj.block(length)"))css = procChe(css);
     if(!css.includes("exec.obj.block(count)"))css = procCnt(css);
-    if(!css.includes("exec.obj.block(define)"))css = procDef(css);
     if(!css.includes("exec.obj.block(debug)"))css = procExC(css);
     } 
     css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "");
