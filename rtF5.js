@@ -11,8 +11,8 @@
  *   - Figsh on figsh.devtem.org, codepen.io, stackoverflow.com
  *   - npm package: fscss (npm install -g fscss)
  * 
- * Version: source v13, package v1+
- * Last Edited: Feb 26th, 2026
+ * Version: source v14, package v1+
+ * Last Edited: Mar 5th, 2026
  * 
  * Note: Use official npm package/CDN instead of copying this directly.
  * visit: (fscss.devtem.org) for support.
@@ -62,6 +62,8 @@ const arraysExfscss = {}; // global variable
 const orderedxFscssRandom = {};
 
 const exfMAX_DEPTH = 10; // Prevent infinite recursion
+const defExfscss = {}; // Stores definitions globally. FIGSH-FSCSS 
+
 function extractBlock(css, startIndex) {
   let depth = 0;
   let i = startIndex;
@@ -88,6 +90,8 @@ function parseConditionBlocks(block) {
   }
   return blocks;
 }
+
+
 function procExC(css) {
   const regex = /exec\((_log|_error|_warn|_info),\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\)/g;
   let jsCode = '';
@@ -364,6 +368,54 @@ function procVar(vcss) {
 
   const result = processSCSS(vcss);
   return result.css;
+}
+
+
+function procDef(fscss) {
+  // First, extract all @define blocks and store them in defExfscss. FIGSH-FSCSS 
+  let processed = fscss.replace(
+    /@define\s+([\w\_\-\—]+)\s*\(([^)]*)\)\s*\$?\{\s*(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^\}^\{]*?))\s*\}/g,
+    (match, name, paramsStr, body1, body2, body3, body4) => {
+      const params = paramsStr.split(',').map(p =>p.trim()).filter(p =>p);
+      const body = body1 ?? body2 ?? body3 ?? body4 ?? '';
+      defExfscss[name] = { params, body };
+      return ''; // Remove the define block from the output. FIGSH-FSCSS 
+    }
+  );
+  
+  // Now replace all @name(...) usages with their expanded bodies. FIGSH-FSCSS 
+  processed = processed.replace(
+    /@([\w\_\-\—]+)\s*\(([\s\S]*?)\)/g,
+    (match, name, argsStr) => {
+      const def = defExfscss[name];
+      if (!def){
+        return match;
+      }// Leave unknown Def macros unchanged. FIGSH-FSCSS  
+      
+      const args = argsStr?.split(',').map(a => a.trim());
+      if(args[0]==='') args[0] = undefined;
+      let result = def.body;
+     
+      /* Replace each @use(param) with the corresponding argument. FIGSH-FSCSS */
+      let xfVal = [];
+      def.params.forEach((param, index) => {
+         const df = def.params[index];
+         if(df&&df.includes(':')){
+         xfVal = df?.split(':')?.map(i=>i.trim()).filter(i=>i);
+         } 
+         
+const dfv = xfVal[1]?xfVal[1]:'';
+
+        const arg = args[index] !== (undefined) ? args[index] : dfv;
+        const regex = new RegExp(`@use\\(\\s*${param.replace(/(\s+)?(\:(\s+)?.*)/g, '')}\\s*\\)`, 'g');
+        result = result.replace(regex, arg);
+      });
+      
+      return result;
+    }
+  );
+  
+  return processed;
 }
 
 function procExt(css) {
@@ -1294,9 +1346,10 @@ async function processStyles() {
     if(!css.includes("exec.obj.block(all)")){
     if(!css.includes("exec.obj.block(init lab)"))css = initlibraries(css);
     if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import pick)"))css = await impSel(css);
-    if(!css.includes("exec.obj.block(f import)"))css = await procImp(css); 
+    if(!css.includes("exec.obj.block(f import)"))css = await procImp(css);
     if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css = initlibraries(css);
     if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
+    
 if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(vfc)")) css = vfc(css);
     if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
@@ -1315,6 +1368,7 @@ if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(t group)"))css = applyFscssTransformations(css);
     if(!css.includes("exec.obj.block(length)"))css = procChe(css);
     if(!css.includes("exec.obj.block(count)"))css = procCnt(css);
+    if(!css.includes("exec.obj.block(define)"))css = procDef(css);
     if(!css.includes("exec.obj.block(debug)"))css = procExC(css);
     } 
     css=css.replace(/exec\.obj\.block\([^\)\n]*\)\;?/g, "");
@@ -1338,5 +1392,7 @@ function processDrawElements() {
     console.error('Error processing styles or draw elements:', error);
   }
 })();
+
+
 
 
