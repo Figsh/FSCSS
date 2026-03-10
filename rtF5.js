@@ -12,7 +12,7 @@
  *   - npm package: fscss (npm install -g fscss)
  * 
  * Version: source v14, package v1+
- * Last Edited: Mar 5th, 2026
+ * Last Edited: 
  * 
  * Note: Use official npm package/CDN instead of copying this directly.
  * visit: (fscss.devtem.org) for support.
@@ -285,7 +285,7 @@ function procExC(css) {
 
   return modifiedCSS.trim();
 }
-function initlibraries(css){
+async function initlibraries(css){
   css = css.replace(/exec\(\s*_init\sisjs\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/isjs.fscss)");
   css = css.replace(/exec\(\s*_init\sthemes\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/trshapes.fthemes.fscss)")
   css = css.replace(/exec\(_init\sarray1to500\s*\)/g, "exec(https://cdn.jsdelivr.net/gh/fscss-ttr/FSCSS@main/xf/styles/1to500.fscss)");
@@ -1439,14 +1439,27 @@ async function processStyles() {
   }for (const element of styleElements) {
     let css = element.textContent;
     if(!css.includes("exec.obj.block(all)")){
-    if(!css.includes("exec.obj.block(init lab)"))css = initlibraries(css);
+    if(!css.includes("exec.obj.block(init lab)"))css = await initlibraries(css);
     if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import pick)"))css = await impSel(css);
      if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import from)"))css = await impFrom(css);
     if(!css.includes("exec.obj.block(f import)"))css = await procImp(css);
-    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css = initlibraries(css);
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css =await initlibraries(css);
     if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import from)"))css = await impFrom(css);
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css =await initlibraries(css);
     if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
-    
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css =await initlibraries(css);
+if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
+  if (!css.includes("exec.obj.block(init lab)") || css.includes("exec.obj.block(exInit lab)")) css = await initlibraries(css);
+  if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import from)")) css = await impFrom(css);
+  if (!css.includes("exec.obj.block(init lab)") || css.includes("exec.obj.block(exInit lab)")) css = await initlibraries(css);
+  if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
+  if (!css.includes("exec.obj.block(init lab)") || css.includes("exec.obj.block(exInit lab)")) css = await initlibraries(css);
+  if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css =await initlibraries(css);
+    if(!css.includes("exec.obj.block(f import)")||!css.includes("exec.obj.block(f import from)"))css = await impFrom(css);
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css =await initlibraries(css);
+    if (!css.includes("exec.obj.block(f import)") || !css.includes("exec.obj.block(f import pick)")) css = await impSel(css);
+    if(!css.includes("exec.obj.block(init lab)")||css.includes("exec.obj.block(exInit lab)"))css =await initlibraries(css);
 if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(vfc)")) css = vfc(css);
     if(!css.includes("exec.obj.block(store:before)")||!css.includes("exec.obj.block(store)"))css = replaceRe(css);
@@ -1455,6 +1468,9 @@ if (!css.includes("exec.obj.block(f import)")) css = await procImp(css);
     if(!css.includes("exec.obj.block(fun)"))css = procFun(css);
     if(!css.includes("exec.obj.block(length)"))css = procChe(css);
     if(!css.includes("exec.obj.block(count)"))css = procCnt(css);
+    if(!css.includes("exec.obj.block(define)"))css = procDef(css);
+    if(!css.includes("exec.obj.block(define)"))css = procDef(css);
+    if(!css.includes("exec.obj.block(define)"))css = procDef(css);
     if(!css.includes("exec.obj.block(define)"))css = procDef(css);
     if(!css.includes("exec.obj.block(arr)"))css = procArr(css);
     if(!css.includes("exec.obj.block(event)"))css = procEv(css);
